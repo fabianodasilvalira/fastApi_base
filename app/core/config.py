@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Configurações de E-mail
     MAIL_USERNAME: Optional[str] = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD: Optional[str] = os.getenv("MAIL_PASSWORD")
+    MYSQL_ROOT_PASSWORD: Optional[str] = os.getenv("MYSQL_ROOT_PASSWORD")
     MAIL_FROM: Optional[str] = os.getenv("MAIL_FROM")
     MAIL_PORT: int = int(os.getenv("MAIL_PORT", "587"))
     MAIL_SERVER: Optional[str] = os.getenv("MAIL_SERVER")
@@ -59,7 +60,7 @@ class Settings(BaseSettings):
         env_file = DOTENV_PATH
         env_file_encoding = "utf-8"
         case_sensitive = True  # Mantém a sensibilidade de maiúsculas/minúsculas das variáveis de ambiente
-
+        extra = "ignore"  # ou "allow"
 
 settings = Settings()
 

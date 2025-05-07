@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/l
 
 # Copia o restante da aplicação
 COPY ./app /app/app
-COPY ./.env /app/.env
+#COPY ./.env /app/.env
 COPY ./alembic.ini /app/alembic.ini
 COPY ./alembic /app/alembic
 

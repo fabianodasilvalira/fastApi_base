@@ -1,5 +1,7 @@
 # app/db/session.py
 import os
+from contextlib import asynccontextmanager
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -31,6 +33,7 @@ AsyncSessionLocal = sessionmaker(
 )
 
 # Função para obter uma sessão de banco de dados (usada como dependência no FastAPI)
+@asynccontextmanager
 async def get_async_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session

@@ -36,7 +36,7 @@ class UserInDBBase(UserBase):
     is_email_verified: bool # Adicionado aqui para refletir o modelo
 
     class Config:
-        orm_mode = True # Permite que o Pydantic leia dados de objetos ORM
+        from_atributes = True # Permite que o Pydantic leia dados de objetos ORM
 
 # Propriedades adicionais para retornar ao cliente (sem o hashed_password)
 class UserOut(UserInDBBase):
@@ -62,7 +62,7 @@ class PasswordResetConfirm(BaseModel):
 # - `UserCreate`: Para criar usuários. Senha é requerida.
 # - `UserUpdate`: Para atualizar usuários. `is_email_verified` adicionado para que Admin possa alterar.
 # - `UserInDBBase`: Representa o usuário no DB, agora incluindo `is_email_verified`.
-#   `Config.orm_mode = True` (ou `from_attributes = True` em Pydantic V2) é crucial.
+#   `Config.from_atributes = True` (ou `from_attributes = True` em Pydantic V2) é crucial.
 # - `UserOut`: Esquema de saída para o cliente. `is_email_verified` será incluído pois está em `UserInDBBase`.
 # - `EmailVerificationRequest`: Schema para quando um usuário solicita (ou reenviar) o e-mail de verificação.
 # - `PasswordResetRequest`: Schema para quando um usuário solicita o e-mail de recuperação de senha.

@@ -1,0 +1,45 @@
+# .gitignore para FastAPI
+
+# Ignorar arquivos de ambiente virtual
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Arquivos e pastas do editor
+.idea/
+.vscode/
+
+# Arquivos de configuração do PyCharm
+*.iml
+.idea/
+
+# Arquivos de banco de dados temporários
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Arquivos de cache
+*.cache
+
+# Arquivos de ambiente
+.env
+*.env
+
+# Diretórios do sistema operacional (macOS, Windows)
+.DS_Store
+Thumbs.db
+
+# Alembic
+alembic/versions/
+
+# Outras pastas geradas
+dist/
+build/
+*.egg-info/

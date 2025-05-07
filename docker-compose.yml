@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./.env:/app/.env # Monta o .env para dentro do container
+    depends_on:
+      db:
+        condition: service_healthy # Garante que o DB esteja pronto
+    env_file:
+      - .env # Carrega variáveis de ambiente do .env
+#    command: bash -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: bash -c "until nc -z -v -w30 db 3306; do echo 'Waiting for MySQL...'; sleep 5; done; alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+
+
+  db:
+    image: mysql:8.0
+    cap_add:
+      - SYS_NICE # Necessário para o healthcheck do MySQL
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fastapi_db} # Usa valor do .env ou default
+      MYSQL_USER: ${MYSQL_USER:-user} # Usa valor do .env ou default
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password} # Usa valor do .env ou default
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password} # Usa valor do .env ou default
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Script de inicialização (opcional)
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$${MYSQL_USER}", "-p$${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+

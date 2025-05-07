@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pymysql
+aiomysql
+greenlet
+alembic
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+pydantic[email]
+fastapi-mail
+Jinja2
+python-multipart

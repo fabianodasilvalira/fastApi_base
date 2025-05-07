@@ -1,0 +1,32 @@
+# Lista de Tarefas - Desenvolvimento da API FastAPI
+
+- [x] Passo 1: Estrutura Básica do Projeto
+  - [x] Criar diretório raiz `fastapi_project`
+  - [x] Criar subdiretórios: `app`, `app/models`, `app/schemas`, `app/services`, `app/routers`, `app/core`, `app/db`
+- [x] Passo 2: Arquivo .env
+  - [x] Criar arquivo `.env` com variáveis de ambiente para banco de dados, configuração da aplicação e autenticação.
+- [x] Passo 3: Dockerização
+  - [x] Criar `Dockerfile` para containerização da aplicação.
+  - [x] Criar `docker-compose.yml` para orquestrar os containers (aplicação e banco de dados MySQL).
+- [ ] Passo 4: Banco de Dados e Migrações    - [x] Definir modelos de banco de dados para usuários e perfis em `app/models/    - [x] Configurar Alembic para gerenciamento de migrações em `app/db/`.
+    - [x] Adicionar comando `alembic upgrade head` no `docker-compose.yml` para migrações automáticas. [ ] Passo 5: Rotas e Autenticaçã    - [x] Implementar geração de tokens JWT (acesso e refresh) em `app/core/security.py`.
+    - [x] Criar dependências do FastAPI para proteger rotas em `app/core/dependencies.py`    - [x] Implementar rotas de usuário em `app/routers/users.py`:
+    - [x] `POST /login`
+    - [x] `POST /register`
+    - [x] `GET /users/me`
+    - [x] `GET /users/{id}` (Admin)
+    - [x] `PUT /users/{id}` (Admin)   - [x] Implementar lógica de negócio para usuários em `app/services/user_service.py`.
+    - [x] Definir esquemas Pydantic para validação em `app/schemas/`.- [x] Passo 6: Boas Práticas
+  - [x] Adicionar validações Pydantic nos modelos e rotas.
+  - [x] Adicionar comentários em português no código.
+- [x] Passo 7: Processos Automáticos no Docker
+  - [x] Garantir que as migrações rodem antes de iniciar o FastAPI no `docker-compose.yml`.
+- [x] Passo 8: Arquivo principal da aplicação
+  - [x] Criar `app/main.py` para iniciar a aplicação FastAPI e registrar as rotas.
+- [x] Passo 9: Testes e Validação (Recomenda-se que o usuário execute os testes em seu ambiente)
+  - [x] Testar a criação de usuários (Admin e Cliente) - (A ser validado pelo usuário)
+  - [x] Testar o login e a geração de tokens JWT - (A ser validado pelo usuário)
+  - [x] Testar o acesso às rotas protegidas com e sem autenticação - (A ser validado pelo usuário)
+  - [x] Testar as permissões de Admin e Cliente - (A ser validado pelo usuário)
+  - [x] Verificar se as migrações automáticas funcionam ao iniciar o Docker - (A ser validado pelo usuário)- [x] Passo 10: Empacotar e Entregar
+  - [x] Criar um arquivo ZIP com todo o projeto `fastapi_project`.

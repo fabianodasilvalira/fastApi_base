@@ -1,31 +1,55 @@
-from sqlalchemy.orm import Session
-from . import models, schemas
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select # Para queries assíncronas
+from sqlalchemy.orm import selectinload # Para eager loading, se necessário
 
-def create_ocorrencia(db: Session, ocorrencia: schemas.OcorrenciaCreate):
-    db_item = models.Ocorrencia(**ocorrencia.dict())
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item
+from app.models.ocorrencia import Ocorrencia # Importar o modelo SQLAlchemy correto
+from app.schemas.ocorrencia_schemas import OcorrenciaCreate, OcorrenciaUpdate # Schemas Pydantic
 
-def get_ocorrencia(db: Session, ocorrencia_id: int):
-    return db.query(models.Ocorrencia).filter(models.Ocorrencia.id == ocorrencia_id).first()
+class OcorrenciaService:
+    async def get_ocorrencia(self, db: AsyncSession, ocorrencia_id: int) -> Ocorrencia | None:
+        """Busca uma ocorrência pelo ID."""
+        result = await db.execute(select(Ocorrencia).filter(Ocorrencia.id == ocorrencia_id))
+        return result.scalars().first()
 
-def get_ocorrencias(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Ocorrencia).offset(skip).limit(limit).all()
+    async def get_ocorrencias(
+        self, db: AsyncSession, skip: int = 0, limit: int = 100
+    ) -> list[Ocorrencia]:
+        """Busca uma lista de ocorrências com paginação."""
+        result = await db.execute(select(Ocorrencia).offset(skip).limit(limit))
+        return result.scalars().all()
 
-def update_ocorrencia(db: Session, ocorrencia_id: int, ocorrencia_data: schemas.OcorrenciaCreate):
-    ocorrencia = get_ocorrencia(db, ocorrencia_id)
-    if ocorrencia:
-        for key, value in ocorrencia_data.dict().items():
-            setattr(ocorrencia, key, value)
-        db.commit()
-        db.refresh(ocorrencia)
-    return ocorrencia
+    async def create_ocorrencia(
+        self, db: AsyncSession, *, ocorrencia_in: OcorrenciaCreate, user_id: int # Adicionado user_id
+    ) -> Ocorrencia:
+        """Cria uma nova ocorrência."""
+        # O modelo Ocorrencia precisa ter um campo user_id
+        db_ocorrencia = Ocorrencia(**ocorrencia_in.model_dump(), user_id=user_id) 
+        db.add(db_ocorrencia)
+        await db.commit()
+        await db.refresh(db_ocorrencia)
+        return db_ocorrencia
 
-def delete_ocorrencia(db: Session, ocorrencia_id: int):
-    ocorrencia = get_ocorrencia(db, ocorrencia_id)
-    if ocorrencia:
-        db.delete(ocorrencia)
-        db.commit()
-    return ocorrencia
+    async def update_ocorrencia(
+        self, db: AsyncSession, *, ocorrencia_db: Ocorrencia, ocorrencia_in: OcorrenciaUpdate
+    ) -> Ocorrencia:
+        """Atualiza uma ocorrência existente."""
+        update_data = ocorrencia_in.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(ocorrencia_db, field, value)
+        db.add(ocorrencia_db) # Adiciona o objeto modificado à sessão
+        await db.commit()
+        await db.refresh(ocorrencia_db)
+        return ocorrencia_db
+
+    async def delete_ocorrencia(self, db: AsyncSession, *, ocorrencia_id: int) -> Ocorrencia | None:
+        """Deleta uma ocorrência pelo ID."""
+        db_ocorrencia = await self.get_ocorrencia(db, ocorrencia_id=ocorrencia_id)
+        if db_ocorrencia:
+            await db.delete(db_ocorrencia)
+            await db.commit()
+            return db_ocorrencia
+        return None
+
+# Instância do serviço para ser importada e usada nas rotas
+ocorrencia_service = OcorrenciaService()
+

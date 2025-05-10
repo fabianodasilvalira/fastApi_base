@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, Time, DateTime, Boolean, Text, Float, ForeignKey
-from .database import Base
+
+from app.db import Base
+
 
 class Ocorrencia(Base):
     __tablename__ = "ocorrencia"

@@ -29,7 +29,7 @@ __pycache__/
 *.cache
 
 # Arquivos de ambiente
-.env
+env
 *.env
 
 # Diretórios do sistema operacional (macOS, Windows)

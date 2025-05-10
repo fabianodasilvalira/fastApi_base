@@ -1,0 +1,188 @@
+Relatório da Suíte de Testes: FastAPI Base System Tests
+Data da Execução: 2025-05-09 21:52:02
+Total de Casos: 30
+Passaram: 30
+Falharam: 0
+
+Detalhes dos Casos:
+=====================
+Caso: Caso de Teste Sem Nome 1
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 2
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 3
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 4
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 5
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 6
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 7
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 8
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 9
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 10
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 11
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 12
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 13
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 14
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 15
+  URL: PUT 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 16
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 17
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 18
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 19
+  URL: PUT 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 20
+  URL: POST 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 21
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 22
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 23
+  URL: PUT 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 24
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 25
+  URL: GET 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 26
+  URL: PUT 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 27
+  URL: DELETE 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 28
+  URL: DELETE 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 29
+  URL: DELETE 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------
+Caso: Caso de Teste Sem Nome 30
+  URL: DELETE 
+  Resultado: PASSOU
+  Status Esperado: None, Status Recebido: None
+  Erro: Erro na requisição: Invalid URL '': No scheme supplied. Perhaps you meant https://?
+---------------------

@@ -1,5 +1,6 @@
 # app/services/user_service.py
 import logging
+import os # Importar os
 from typing import Optional, List
 from datetime import datetime, timedelta, timezone
 
@@ -19,6 +20,11 @@ from app.core.email_utils import (
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Verificar se estamos em modo de teste para auto-verificar e-mails
+TEST_MODE_AUTO_VERIFY_EMAIL = os.getenv("TEST_MODE_AUTO_VERIFY_EMAIL", "false").lower() == "true"
+if TEST_MODE_AUTO_VERIFY_EMAIL:
+    logger.warning("MODO DE TESTE ATIVO: E-mails de novos usuários serão auto-verificados.")
 
 class UserService:
     async def get_user_by_id(self, db: AsyncSession, user_id: int) -> Optional[User]:
@@ -71,9 +77,9 @@ class UserService:
             hashed_password=hashed_password,
             full_name=user_in.full_name,
             role=user_in.role,
-            is_email_verified=False,
-            email_verification_token=email_verification_token,
-            token_expiry_date=token_expiry
+            is_email_verified=True if TEST_MODE_AUTO_VERIFY_EMAIL else False, # Modificado aqui
+            email_verification_token=None if TEST_MODE_AUTO_VERIFY_EMAIL else email_verification_token, # Modificado aqui
+            token_expiry_date=None if TEST_MODE_AUTO_VERIFY_EMAIL else token_expiry # Modificado aqui
         )
 
         try:
@@ -85,15 +91,17 @@ class UserService:
             logger.error(f"Erro ao criar usuário: {e}")
             return None
 
-        try:
-            username = db_user.full_name or db_user.email
-            await send_email_verification_email(
-                email_to=db_user.email,
-                username=username,
-                token=email_verification_token
-            )
-        except Exception as e:
-            logger.warning(f"Erro ao enviar e-mail de verificação: {e}")
+        # Não enviar e-mail de verificação se auto-verificado em modo de teste
+        if not TEST_MODE_AUTO_VERIFY_EMAIL:
+            try:
+                username = db_user.full_name or db_user.email
+                await send_email_verification_email(
+                    email_to=db_user.email,
+                    username=username,
+                    token=email_verification_token # Este token só é relevante se não for auto-verificado
+                )
+            except Exception as e:
+                logger.warning(f"Erro ao enviar e-mail de verificação: {e}")
 
         return db_user
 
@@ -124,7 +132,7 @@ class UserService:
             if db_user:
                 await db.delete(db_user)
                 await db.commit()
-            return db_user
+            return db_user # Retorna o usuário deletado para confirmação
         except SQLAlchemyError as e:
             await db.rollback()
             logger.error(f"Erro ao deletar usuário: {e}")
@@ -153,7 +161,7 @@ class UserService:
         try:
             user = await self.get_user_by_email(db, email=email)
             if not user:
-                return False
+                return False # Não vazar informação se o e-mail existe
 
             password_reset_token = generate_secure_token()
             token_expiry = datetime.now(timezone.utc) + timedelta(hours=settings.PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
@@ -163,7 +171,7 @@ class UserService:
 
             db.add(user)
             await db.commit()
-            await db.refresh(user)
+            # Não precisa de refresh aqui, pois não estamos retornando o objeto user imediatamente
 
             try:
                 username = user.full_name or user.email
@@ -174,6 +182,8 @@ class UserService:
                 )
             except Exception as e:
                 logger.warning(f"Erro ao enviar e-mail de reset de senha: {e}")
+                # Considerar se a falha no envio de e-mail deve reverter a transação do token.
+                # Por ora, o token é salvo mesmo que o e-mail falhe.
 
             return True
         except SQLAlchemyError as e:
@@ -204,7 +214,8 @@ class UserService:
         try:
             user = await self.get_user_by_email(db, email=email)
             if not user or user.is_email_verified:
-                return False
+                # Não enviar se usuário não existe ou já está verificado
+                return False 
 
             email_verification_token = generate_secure_token()
             token_expiry = datetime.now(timezone.utc) + timedelta(hours=settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS)
@@ -214,7 +225,7 @@ class UserService:
 
             db.add(user)
             await db.commit()
-            await db.refresh(user)
+            # Não precisa de refresh aqui
 
             try:
                 username = user.full_name or user.email
@@ -232,5 +243,5 @@ class UserService:
             logger.error(f"Erro ao gerar novo token de verificação: {e}")
             return False
 
-
 user_service = UserService()
+

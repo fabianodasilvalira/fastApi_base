@@ -1,4 +1,6 @@
-# Este arquivo pode ficar vazio ou ser usado para expor os modelos
-# from .user import User # Exemplo
+from .ocorrencia import Ocorrencia
+from .user import User
+from .parecer import Parecer # Adicionado Parecer
+from .sistemas_autorizados import SistemaAutorizado # Adicionado SistemaAutorizado
 
-from .user import User  # Certifique-se de importar a classe User
+__all__ = ["Ocorrencia", "User", "Parecer", "SistemaAutorizado"]

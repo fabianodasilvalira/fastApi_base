@@ -1,18 +1,21 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from app.models.ocorrencia import Ocorrencia
 from app.schemas.ocorrencia_schemas import OcorrenciaCreate
 
 
-def create_ocorrencia(db: Session, ocorrencia: OcorrenciaCreate):
+async def create_ocorrencia(db: AsyncSession, ocorrencia: OcorrenciaCreate):
     db_ocorrencia = Ocorrencia(**ocorrencia.dict())
     db.add(db_ocorrencia)
-    db.commit()
-    db.refresh(db_ocorrencia)
+    await db.commit()
+    await db.refresh(db_ocorrencia)
     return db_ocorrencia
 
-def get_ocorrencias(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Ocorrencia).offset(skip).limit(limit).all()
+async def get_ocorrencias(db: AsyncSession, skip: int = 0, limit: int = 100):
+    result = await db.execute(select(Ocorrencia).offset(skip).limit(limit))
+    return result.scalars().all()
 
-def get_ocorrencia_by_id(db: Session, ocorrencia_id: int):
-    return db.query(Ocorrencia).filter(Ocorrencia.id == ocorrencia_id).first()
+async def get_ocorrencia_by_id(db: AsyncSession, ocorrencia_id: int):
+    result = await db.execute(select(Ocorrencia).filter(Ocorrencia.id == ocorrencia_id))
+    return result.scalars().first()

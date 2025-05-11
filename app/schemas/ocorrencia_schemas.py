@@ -1,49 +1,57 @@
-from pydantic import BaseModel
+# app/schemas/ocorrencia_schemas.py
 from typing import Optional
 from datetime import date, time, datetime
+from pydantic import BaseModel
 
 class OcorrenciaBase(BaseModel):
-    data_ocorrencia: Optional[date]
-    hora_ocorrencia: Optional[time]
-    situacao_ocorrencia_id: Optional[int]
-    tipo_atendimento_id: Optional[int]
-    programa_id: Optional[int]
-    tipo_ocorrencia_id: Optional[int]
-    protocolo: Optional[str]
-    regiao_id: Optional[int]
-    sigilo: Optional[str]
-    nome_completo: Optional[str]
-    endereco: Optional[str]
-    fone1: Optional[str]
-    fone2: Optional[str]
-    email: Optional[str]
-    url_file: Optional[str]
-    assunto: Optional[str]
-    mensagem: Optional[str]
-    encaminhamento_orgao_id: Optional[int]
-    encaminhamento_usuario_id: Optional[int]
-    encaminhamento_data: Optional[datetime]
-    parecer_usuario_id: Optional[int]
-    parecer_descricao: Optional[str]
-    parecer_data: Optional[datetime]
-    notificar: Optional[str]
-    notificado: Optional[str]
-    situacao_anterior: Optional[int]
-    programa_anterior: Optional[int]
-    tipo_atend_anterior: Optional[int]
-    pessoa_id: Optional[int]
-    user_id: Optional[int]
-    cadastro: Optional[datetime]
-    atualizacao: Optional[datetime]
-    latitude: Optional[float]
-    longitude: Optional[float]
-    arquivado: Optional[str]
+    data_ocorrencia: Optional[date] = None
+    hora_ocorrencia: Optional[time] = None
+    situacao_ocorrencia_id: Optional[int] = None
+    tipo_atendimento_id: Optional[int] = None
+    programa_id: Optional[int] = None
+    tipo_ocorrencia_id: Optional[int] = None
+    protocolo: Optional[str] = None
+    regiao_id: Optional[int] = None
+    sigilo: Optional[str] = None
+    nome_completo: Optional[str] = None
+    endereco: Optional[str] = None
+    fone1: Optional[str] = None
+    fone2: Optional[str] = None
+    email: Optional[str] = None
+    url_file: Optional[str] = None
+    assunto: Optional[str] = None
+    mensagem: Optional[str] = None
+    encaminhamento_orgao_id: Optional[int] = None
+    encaminhamento_usuario_id: Optional[int] = None
+    encaminhamento_data: Optional[datetime] = None # Adicionado conforme modelo
+    parecer_usuario_id: Optional[int] = None
+    parecer_descricao: Optional[str] = None
+    parecer_data: Optional[datetime] = None # Adicionado conforme modelo
+    notificar: Optional[str] = None
+    notificado: Optional[str] = None
+    situacao_anterior: Optional[int] = None
+    programa_anterior: Optional[int] = None
+    tipo_atend_anterior: Optional[int] = None
+    pessoa_id: Optional[int] = None
+    user_id: Optional[int] = None
+    cadastro: Optional[datetime] = None
+    atualizacao: Optional[datetime] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    arquivado: Optional[str] = None
 
 class OcorrenciaCreate(OcorrenciaBase):
+    # Campos obrigatórios para criação podem ser definidos aqui, se diferentes de OcorrenciaBase
+    pass
+
+class OcorrenciaUpdate(OcorrenciaBase):
+    # Todos os campos são opcionais para atualização, herdando de OcorrenciaBase
+    # onde todos já são Optional.
     pass
 
 class OcorrenciaOut(OcorrenciaBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Alterado de orm_mode para Pydantic V2
+

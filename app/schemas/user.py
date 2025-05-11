@@ -1,70 +1,135 @@
-# app/schemas/user.py
-from typing import Optional
+from typing import Optional, Any, Annotated
 from enum import Enum
+from pydantic import BaseModel, EmailStr, validator, Field
+from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
-
-# Reutiliza o Enum de UserRole definido nos modelos para consistência
-# from app.models.user import UserRole # Idealmente, importar se possível
-
+# Enum para Role
 class UserRole(str, Enum):
+    USER = "user"
     ADMIN = "admin"
-    CLIENTE = "cliente"
 
-# Propriedades básicas do usuário, compartilhadas por outros esquemas
+# CPF validator function
+def validate_cpf(value: str) -> str:
+    if not value:
+        return value
+
+    cpf = ''.join(filter(str.isdigit, value))
+
+    if len(cpf) != 11:
+        raise ValueError("CPF deve conter 11 dígitos numéricos.")
+
+    if cpf == cpf[0] * 11:
+        raise ValueError("CPF inválido: todos os dígitos são iguais.")
+
+    soma = sum(int(cpf[i]) * (10 - i) for i in range(9))
+    dv1 = 0 if soma % 11 < 2 else 11 - (soma % 11)
+    if dv1 != int(cpf[9]):
+        raise ValueError("CPF inválido: primeiro dígito verificador não confere.")
+
+    soma = sum(int(cpf[i]) * (11 - i) for i in range(10))
+    dv2 = 0 if soma % 11 < 2 else 11 - (soma % 11)
+    if dv2 != int(cpf[10]):
+        raise ValueError("CPF inválido: segundo dígito verificador não confere.")
+
+    return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+
+
+# Define CPFField usando Annotated + Field (opcional)
+CPFField = Annotated[str, Field(..., min_length=11, max_length=14)]
+
+
+# Base
 class UserBase(BaseModel):
-    email: EmailStr = Field(..., example="usuario@example.com")
-    full_name: Optional[str] = Field(None, example="Nome Completo do Usuário")
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    cpf: Optional[CPFField] = None
+    is_active: Optional[bool] = True
+    is_email_verified: Optional[bool] = False
+    role: Optional[UserRole] = UserRole.USER
 
-# Propriedades para criar um novo usuário
+    @validator('cpf')
+    def cpf_validator(cls, v):
+        return validate_cpf(v)
+
+
+# Criação de usuário
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, example="senhaSuperF0rte")
-    role: UserRole = Field(UserRole.CLIENTE, example="cliente") # Default para cliente
+    email: EmailStr
+    password: str
+    full_name: str
+    cpf: CPFField
 
-# Propriedades para atualizar um usuário (Admin pode atualizar mais campos)
-class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = Field(None, example="novo_email@example.com")
-    full_name: Optional[str] = Field(None, example="Novo Nome Completo")
-    password: Optional[str] = Field(None, min_length=8, example="novaSenhaSuperF0rte")
-    role: Optional[UserRole] = Field(None, example="admin")
-    is_email_verified: Optional[bool] = None # Admin pode verificar email manualmente
 
-# Propriedades armazenadas no DB, mas não necessariamente retornadas sempre
+# Atualização de usuário
+class UserUpdate(UserBase):
+    password: Optional[str] = None
+
+
+# Modelo interno (usado no banco)
 class UserInDBBase(UserBase):
     id: int
-    role: UserRole
-    is_email_verified: bool # Adicionado aqui para refletir o modelo
+    hashed_password: str
 
     class Config:
-        from_atributes = True # Permite que o Pydantic leia dados de objetos ORM
+        orm_mode = True
 
-# Propriedades adicionais para retornar ao cliente (sem o hashed_password)
-class UserOut(UserInDBBase):
-    # is_email_verified já está em UserInDBBase, então será incluído
-    pass 
 
-# Schema para solicitar verificação de e-mail ou reenvio de token
+# Saída da API
+class UserOut(UserBase):
+    id: int
+    email: EmailStr
+    full_name: Optional[str] = None
+    cpf: Optional[CPFField] = None
+    is_active: bool
+    is_email_verified: bool
+    role: UserRole
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
+
+
+# Schemas de autenticação
+class Token(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+    token_type: str
+
+
+class TokenPayload(BaseModel):
+    sub: Optional[str] = None
+    user_id: Optional[int] = None
+    role: Optional[UserRole] = None
+    exp: Optional[datetime] = None
+
+
+# Verificação de e-mail e senha
 class EmailVerificationRequest(BaseModel):
-    email: EmailStr = Field(..., example="usuario@example.com")
+    email: EmailStr
 
-# Schema para solicitar reset de senha
+
 class PasswordResetRequest(BaseModel):
-    email: EmailStr = Field(..., example="usuario@example.com")
+    email: EmailStr
 
-# Schema para confirmar o reset de senha com o token
+
 class PasswordResetConfirm(BaseModel):
-    # token: str = Field(..., example="seu_token_de_reset_aqui") # O token virá pela URL
-    new_password: str = Field(..., min_length=8, example="novaSenhaSuperF0rte")
+    new_password: str = Field(..., min_length=8)
 
-# Comentários em português:
-# - `UserRole`: Enum para os papéis de usuário.
-# - `UserBase`: Campos comuns.
-# - `UserCreate`: Para criar usuários. Senha é requerida.
-# - `UserUpdate`: Para atualizar usuários. `is_email_verified` adicionado para que Admin possa alterar.
-# - `UserInDBBase`: Representa o usuário no DB, agora incluindo `is_email_verified`.
-#   `Config.from_atributes = True` (ou `from_attributes = True` em Pydantic V2) é crucial.
-# - `UserOut`: Esquema de saída para o cliente. `is_email_verified` será incluído pois está em `UserInDBBase`.
-# - `EmailVerificationRequest`: Schema para quando um usuário solicita (ou reenviar) o e-mail de verificação.
-# - `PasswordResetRequest`: Schema para quando um usuário solicita o e-mail de recuperação de senha.
-# - `PasswordResetConfirm`: Schema para o usuário fornecer a nova senha. O token será parte da URL da rota, não do corpo.
 
+# Validação de cadastro
+class UserValidationRequest(BaseModel):
+    email: Optional[EmailStr] = None
+    cpf: Optional[CPFField] = None
+
+    @validator('cpf', pre=True, always=True)
+    def check_at_least_one_field(cls, v, values, **kwargs):
+        if not v and not values.get('email'):
+            raise ValueError("Deve ser fornecido ao menos um campo: email ou CPF.")
+        return v
+
+
+class UserValidationResponse(BaseModel):
+    is_registered: bool
+    message: str
+    user_details: Optional[UserOut] = None

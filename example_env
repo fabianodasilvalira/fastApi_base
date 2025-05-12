@@ -1,0 +1,30 @@
+# === Configurações da Aplicação ===
+APP_NAME=FastAPI Base
+ENVIRONMENT=development
+DEBUG=True
+SECRET_KEY=sua_chave_secreta_segura
+
+# === Banco de Dados ===
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=db_ouvidoria
+DB_USER=root
+DB_PASSWORD=
+DATABASE_URL=mysql+aiomysql://root:@localhost:3306/db_ouvidoria
+
+# === Configurações de Email ===
+MAIL_USERNAME=seuemail@gmail.com
+MAIL_PASSWORD=sua_senha_de_app
+MAIL_FROM=seuemail@gmail.com
+MAIL_FROM_NAME=FastAPI Base
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_TLS=True
+MAIL_SSL=False
+
+# === Token JWT ===
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+ALGORITHM=HS256
+
+# === Timezone ===
+TZ=America/Sao_Paulo

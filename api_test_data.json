@@ -1,384 +1,85 @@
-{
-  "test_suite_name": "FastAPI Base System Tests",
-  "global_headers": {},
-  "variables": {},
-  "test_cases": [
-    {
-      "description": "Register a new admin user",
-      "method": "POST",
-      "path": "/api/v1/users/register",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "email": "admin@example.com",
-        "password": "adminstrongpassword123",
-        "full_name": "Admin User One",
-        "role": "admin"
-      },
-      "expected_status_code": 201,
-      "notes": "This admin user will be used for subsequent admin-only tests. Ensure email is unique. Save the ID as {{ADMIN_USER_ID}}."
-    },
-    {
-      "description": "Register a new regular user",
-      "method": "POST",
-      "path": "/api/v1/users/register",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "email": "user1@example.com",
-        "password": "userstrongpassword123",
-        "full_name": "Regular User One",
-        "role": "user"
-      },
-      "expected_status_code": 201,
-      "notes": "Ensure email is unique. Save the ID as {{REGULAR_USER_ID_1}}."
-    },
-    {
-      "description": "Attempt to register with an existing email",
-      "method": "POST",
-      "path": "/api/v1/users/register",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "email": "user1@example.com",
-        "password": "anotherpassword",
-        "full_name": "Duplicate User",
-        "role": "user"
-      },
-      "expected_status_code": 400
-    },
-    {
-      "description": "Login as admin user",
-      "method": "POST",
-      "path": "/api/v1/users/login",
-      "headers": {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      "payload_form": {
-        "username": "admin@example.com",
-        "password": "adminstrongpassword123"
-      },
-      "expected_status_code": 200,
-      "extract_token": "ADMIN_AUTH_TOKEN",
-      "notes": "Store the returned access_token as {{ADMIN_AUTH_TOKEN}}."
-    },
-    {
-      "description": "Login as regular user",
-      "method": "POST",
-      "path": "/api/v1/users/login",
-      "headers": {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      "payload_form": {
-        "username": "user1@example.com",
-        "password": "userstrongpassword123"
-      },
-      "expected_status_code": 200,
-      "extract_token": "USER_AUTH_TOKEN",
-      "notes": "Store the returned access_token as {{USER_AUTH_TOKEN}}."
-    },
-    {
-      "description": "Request email verification for a new user",
-      "method": "POST",
-      "path": "/api/v1/users/request-email-verification",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "email": "verify@example.com"
-      },
-      "expected_status_code": 200,
-      "notes": "Register 'verify@example.com' first. This should send a (mocked) email with a token."
-    },
-    {
-      "description": "Verify email with a placeholder token",
-      "method": "GET",
-      "path": "/api/v1/users/verify-email/{{EMAIL_VERIFICATION_TOKEN_PLACEHOLDER}}",
-      "headers": {},
-      "expected_status_code": 400,
-      "notes": "Replace with a real token to get 200. This tests invalid token path."
-    },
-    {
-      "description": "Request password reset for admin user",
-      "method": "POST",
-      "path": "/api/v1/users/request-password-reset",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "email": "admin@example.com"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Reset password with a placeholder token",
-      "method": "POST",
-      "path": "/api/v1/users/reset-password/{{PASSWORD_RESET_TOKEN_PLACEHOLDER}}",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "new_password": "newadminpassword123"
-      },
-      "expected_status_code": 400,
-      "notes": "Replace with a real token to get 200. This tests invalid token path."
-    },
-    {
-      "description": "Get current user details (me)",
-      "method": "GET",
-      "path": "/api/v1/users/me",
-      "headers": {
-        "Authorization": "Bearer {{USER_AUTH_TOKEN}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Create an authorized system (Admin only)",
-      "method": "POST",
-      "path": "/api/v1/sistemas-autorizados/",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "nome": "SistemaClientePrincipal",
-        "descricao": "Sistema cliente principal para integra\u00e7\u00f5es",
-        "ativo": true
-      },
-      "expected_status_code": 201,
-      "extract_api_key": "SYSTEM_API_KEY",
-      "extract_id": "SISTEMA_ID_1",
-      "notes": "Store 'token' as {{SYSTEM_API_KEY}} and 'id' as {{SISTEMA_ID_1}}."
-    },
-    {
-      "description": "Validate the created system API key",
-      "method": "POST",
-      "path": "/api/v1/sistemas-autorizados/validar-token/",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "List all users (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/users/",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Get specific user by ID (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/users/{{REGULAR_USER_ID_1}}",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Update specific user by ID (Admin Token + System API Key)",
-      "method": "PUT",
-      "path": "/api/v1/users/{{REGULAR_USER_ID_1}}",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "full_name": "Regular User One Updated"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Create Ocorrencia (Admin Token + System API Key)",
-      "method": "POST",
-      "path": "/api/v1/ocorrencias/",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Content-Type": "application/json",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "payload": {
-        "titulo": "Vazamento de \u00c1gua Urgente",
-        "descricao": "Grande vazamento na rua principal, pr\u00f3ximo ao n\u00famero 123.",
-        "tipo": "Vazamento",
-        "status": "aberta",
-        "latitude": -23.5505,
-        "longitude": -46.6333,
-        "user_id": "{{REGULAR_USER_ID_1}}"
-      },
-      "expected_status_code": 200,
-      "extract_id": "OCORRENCIA_ID_1"
-    },
-    {
-      "description": "List Ocorrencias (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/ocorrencias/",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Get Ocorrencia by ID (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/ocorrencias/{{OCORRENCIA_ID_1}}",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Update Ocorrencia by ID (Admin Token + System API Key)",
-      "method": "PUT",
-      "path": "/api/v1/ocorrencias/{{OCORRENCIA_ID_1}}",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Content-Type": "application/json",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "payload": {
-        "titulo": "Vazamento de \u00c1gua Urgente (Atualizado)",
-        "status": "em_andamento"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Create Parecer for Ocorrencia (Admin Token + System API Key)",
-      "method": "POST",
-      "path": "/api/v1/pareceres/",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Content-Type": "application/json",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "payload": {
-        "ocorrencia_id": "{{OCORRENCIA_ID_1}}",
-        "user_id": "{{ADMIN_USER_ID}}",
-        "conteudo": "Parecer t\u00e9cnico inicial: necess\u00e1rio envio de equipe ao local.",
-        "tipo_parecer": "Tecnico"
-      },
-      "expected_status_code": 200,
-      "extract_id": "PARECER_ID_1"
-    },
-    {
-      "description": "List Pareceres (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/pareceres/",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Get Parecer by ID (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/pareceres/{{PARECER_ID_1}}",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Update Parecer by ID (Admin Token + System API Key)",
-      "method": "PUT",
-      "path": "/api/v1/pareceres/{{PARECER_ID_1}}",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Content-Type": "application/json",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "payload": {
-        "conteudo": "Parecer t\u00e9cnico atualizado: equipe enviada, aguardando relat\u00f3rio.",
-        "tipo_parecer": "Tecnico"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Listar sistemas autorizados (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/sistemas-autorizados/",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Obter sistema autorizado por ID (Admin Token + System API Key)",
-      "method": "GET",
-      "path": "/api/v1/sistemas-autorizados/{{SISTEMA_ID_1}}",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Atualizar sistema autorizado (Admin Token + System API Key)",
-      "method": "PUT",
-      "path": "/api/v1/sistemas-autorizados/{{SISTEMA_ID_1}}",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Content-Type": "application/json"
-      },
-      "payload": {
-        "nome": "SistemaClientePrincipal Renomeado",
-        "ativo": false
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Delete Parecer by ID (Admin Token + System API Key)",
-      "method": "DELETE",
-      "path": "/api/v1/pareceres/{{PARECER_ID_1}}",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Delete Ocorrencia by ID (Admin Token + System API Key)",
-      "method": "DELETE",
-      "path": "/api/v1/ocorrencias/{{OCORRENCIA_ID_1}}",
-      "headers": {
-        "X-API-KEY": "{{SYSTEM_API_KEY}}",
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Delete user by ID (Admin Token + System API Key)",
-      "method": "DELETE",
-      "path": "/api/v1/users/{{REGULAR_USER_ID_1}}",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}"
-      },
-      "expected_status_code": 200
-    },
-    {
-      "description": "Deletar sistema autorizado (Admin Token + System API Key)",
-      "method": "DELETE",
-      "path": "/api/v1/sistemas-autorizados/{{SISTEMA_ID_1}}",
-      "headers": {
-        "Authorization": "Bearer {{ADMIN_AUTH_TOKEN}}",
-        "X-API-KEY": "{{SYSTEM_API_KEY}}"
-      },
-      "expected_status_code": 200
-    }
-  ]
-}
+type: collection.insomnia.rest/5.0
+name: My Collection
+meta:
+  id: wrk_c18c27ac3c3543f08f1d432245f37923
+  created: 1747053897579
+  modified: 1747053897579
+collection:
+  - name: sistemas_autorizados
+    meta:
+      id: fld_39d8a8d8ad094d56ae9663e9872a7c08
+      created: 1747054026990
+      modified: 1747054026990
+      sortKey: -1747054026991
+    children:
+      - url: http://localhost:8000/api/v1/sistemas-autorizados
+        name: New Request
+        meta:
+          id: req_d8a71b0f01224aa4b0bdf2f3de1f38e8
+          created: 1747054029541
+          modified: 1747054195821
+          isPrivate: false
+          sortKey: -1747054029541
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "nome": "Sistema Teste",
+              "token": "fabianodasilvalira",
+              "ativo": true,
+              "descricao": "Descrição detalhada do sistema autorizado",
+              "data_criacao": "2025-05-12T12:00:00",
+              "ultima_atividade": "2025-05-12T12:00:00"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.0.2
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:8000/api/v1/sistemas-autorizados
+        name: New Request
+        meta:
+          id: req_44ade06fd9d244d2a329b66ecb5cf89b
+          created: 1747054215821
+          modified: 1747054298474
+          isPrivate: false
+          sortKey: -1747054215821
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.0.2
+            id: pair_37f56bbb480343b2a0735df6c377c8a3
+          - id: pair_2fa889d207b2477ca600daf49a0d471c
+            name: X-API-KEY
+            value: 1ef7ecf5-4819-46c4-9d8a-ac5f6d0e9b1e
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_4b5ddb609f80e9ff164d462273aa0a71c5fc8643
+    created: 1747053897591
+    modified: 1747053897591
+environments:
+  name: Base Environment
+  meta:
+    id: env_4b5ddb609f80e9ff164d462273aa0a71c5fc8643
+    created: 1747053897589
+    modified: 1747053897589
+    isPrivate: false

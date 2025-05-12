@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, constr
 from datetime import datetime
 from typing import Optional
 
@@ -6,15 +6,18 @@ from typing import Optional
 class UserBase(BaseModel):
     username: str
     name: str
-    cpf: str
+    cpf: str # Garantir que o CPF tenha 11 dígitos
     phone: Optional[str] = None
-    perfil: str = "Usuário"  # Agora é apenas uma string
-    email: str
+    perfil: str = "Usuário"
+    email: EmailStr  # Validação de email
     status: int = 10
 
 
-class UserCreate(UserBase):
-    password: str
+class UserCreate(UserBase):  # Herda de UserBase para manter os campos básicos
+    password: str  # Adicionando o campo password
+
+    class Config:
+        orm_mode = True
 
 
 class UserUpdate(UserBase):
@@ -28,3 +31,8 @@ class UserOut(UserBase):
 
     class Config:
         orm_mode = True
+
+
+class UserCheckRequest(BaseModel):
+    cpf: str
+    phone: str

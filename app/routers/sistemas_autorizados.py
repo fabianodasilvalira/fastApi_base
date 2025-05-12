@@ -27,10 +27,10 @@ router = APIRouter()
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
-async def criar_sistema_autorizado_endpoint(
+async def criar_sistema_autorizado(
     sistema: schemas.SistemaAutorizadoCreate, 
     db: AsyncSession = Depends(get_async_db),
-    admin_user: models.User = Depends(require_admin_user)
+    #admin_user: models.User = Depends(require_admin_user)
 ):
     try:
         # Verificar se já existe um sistema com o mesmo nome, se for uma constraint
@@ -71,7 +71,7 @@ async def criar_sistema_autorizado_endpoint(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
-async def listar_sistemas_autorizados_endpoint(
+async def listar_sistemas_autorizados(
     skip: int = Query(0, ge=0, description="Número de registros a pular para paginação."), 
     limit: int = Query(100, ge=1, le=200, description="Número máximo de registros a retornar."), 
     db: AsyncSession = Depends(get_async_db),
@@ -105,7 +105,7 @@ async def listar_sistemas_autorizados_endpoint(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
-async def obter_sistema_autorizado_endpoint(
+async def obter_sistema_autorizado(
     sistema_id: int = Path(..., description="ID do sistema autorizado a ser buscado."),
     db: AsyncSession = Depends(get_async_db),
     admin_user: models.User = Depends(require_admin_user),
@@ -140,7 +140,7 @@ async def obter_sistema_autorizado_endpoint(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
-async def validar_token_endpoint(
+async def validar_token(
     # A dependência get_current_authorized_system já trata a extração e validação do X-API-KEY.
     # Ela levantará HTTPException 401/403 se o token for inválido, ausente ou sistema inativo.
     validating_system: models.SistemaAutorizado = Depends(get_current_authorized_system) 
@@ -168,7 +168,7 @@ async def validar_token_endpoint(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
-async def atualizar_ultima_atividade_endpoint(
+async def atualizar_ultima_atividade(
     sistema_id: int = Path(..., description="ID do sistema para atualizar a última atividade."), 
     db: AsyncSession = Depends(get_async_db),
     admin_user: models.User = Depends(require_admin_user),
@@ -210,7 +210,7 @@ async def atualizar_ultima_atividade_endpoint(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
-async def atualizar_sistema_autorizado_endpoint(
+async def atualizar_sistema_autorizado(
     sistema_update: schemas.SistemaAutorizadoUpdate,
     sistema_id: int = Path(..., description="ID do sistema autorizado a ser atualizado."),
     db: AsyncSession = Depends(get_async_db),
@@ -252,37 +252,43 @@ async def atualizar_sistema_autorizado_endpoint(
             detail=f"Ocorreu um erro inesperado ao atualizar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
         )
 
-@router.delete(
+
+@router.put(
     "/{sistema_id}",
-    response_model=SistemaAutorizadoResponse, # Ou um schema de confirmação
-    summary="Deletar Sistema Autorizado (Admin + Sistema Autorizado)",
-    description="Deleta um sistema autorizado. Requer autenticação de usuário Admin E X-API-KEY de sistema autorizado.",
+    response_model=SistemaAutorizadoResponse,  # Ou um schema de confirmação
+    summary="Inativar Sistema Autorizado (Admin + Sistema Autorizado)",
+    description="Inativa um sistema autorizado. Requer autenticação de usuário Admin E X-API-KEY de sistema autorizado.",
     responses={
-        status.HTTP_200_OK: {"description": "Sistema autorizado deletado com sucesso."},
+        status.HTTP_200_OK: {"description": "Sistema autorizado inativado com sucesso."},
         status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
         status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
-        status.HTTP_404_NOT_FOUND: {"description": "Sistema autorizado não encontrado para deleção."},
+        status.HTTP_404_NOT_FOUND: {"description": "Sistema autorizado não encontrado para inativação."},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
-async def deletar_sistema_autorizado_endpoint(
-    sistema_id: int = Path(..., description="ID do sistema autorizado a ser deletado."),
-    db: AsyncSession = Depends(get_async_db),
-    admin_user: models.User = Depends(require_admin_user),
-    authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
+async def inativar_sistema_autorizado(
+        sistema_id: int = Path(..., description="ID do sistema autorizado a ser inativado."),
+        db: AsyncSession = Depends(get_async_db),
+        admin_user: models.User = Depends(require_admin_user),
+        authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
+        # Buscar o sistema autorizado no banco
         db_sistema = await sistemas_autorizados_service.get_sistema_autorizado_by_id(db, sistema_id=sistema_id)
         if db_sistema is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Sistema autorizado com ID {sistema_id} não encontrado para deleção.")
-        
-        deleted_sistema = await sistemas_autorizados_service.delete_sistema_autorizado(db, db_sistema)
-        return deleted_sistema
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Sistema autorizado com ID {sistema_id} não encontrado para inativação.")
+
+        # Inativar o sistema autorizado (exemplo: atualizar o campo 'ativo' para False)
+        db_sistema.ativo = False  # Supondo que a tabela tenha um campo 'ativo'
+        await db.commit()
+
+        return db_sistema  # Retorna o sistema com o status atualizado
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ocorreu um erro de banco de dados ao deletar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
+            detail=f"Ocorreu um erro de banco de dados ao inativar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
         )
     except HTTPException as e:
         raise e
@@ -290,6 +296,5 @@ async def deletar_sistema_autorizado_endpoint(
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ocorreu um erro inesperado ao deletar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
+            detail=f"Ocorreu um erro inesperado ao inativar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
         )
-

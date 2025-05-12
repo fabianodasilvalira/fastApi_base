@@ -1,26 +1,23 @@
-from sqlalchemy import Column, Integer, String, Enum as SQLAlchemyEnum, Boolean, DateTime
-from sqlalchemy.orm import relationship
-from enum import Enum
-import datetime
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
-from app.db.base_class import Base
-
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    CLIENTE = "cliente"
+Base = declarative_base()
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "user"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    cpf = Column(String(14), unique=True, index=True, nullable=False)  # CPF adicionado, 11 dígitos + máscara
-    hashed_password = Column(String(255), nullable=False)
-    full_name = Column(String(255), index=True, nullable=True) # Permitindo nome completo ser opcional inicialmente
-    role = Column(SQLAlchemyEnum(UserRole), default=UserRole.CLIENTE, nullable=False)
-
-    is_email_verified = Column(Boolean, default=False, nullable=False)
-    email_verification_token = Column(String(255), unique=True, index=True, nullable=True)
-    password_reset_token = Column(String(255), unique=True, index=True, nullable=True)
-    token_expiry_date = Column(DateTime, nullable=True)
-
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255), nullable=False)
+    cpf = Column(String(14), nullable=False, unique=True)
+    phone = Column(String(20), nullable=True)
+    perfil = Column(String(255), nullable=False, default="Usuário")  # Mudei para String
+    auth_key = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    password_reset_token = Column(String(255), nullable=True)
+    email = Column(String(255), nullable=False, unique=True)
+    status = Column(Integer, nullable=False, default=10)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    verification_token = Column(String(255), nullable=True)

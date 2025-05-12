@@ -75,7 +75,7 @@ async def listar_sistemas_autorizados_endpoint(
     skip: int = Query(0, ge=0, description="Número de registros a pular para paginação."), 
     limit: int = Query(100, ge=1, le=200, description="Número máximo de registros a retornar."), 
     db: AsyncSession = Depends(get_async_db),
-    admin_user: models.User = Depends(require_admin_user),
+    # admin_user: models.User = Depends(require_admin_user),
     authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:

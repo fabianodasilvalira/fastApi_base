@@ -1,5 +1,7 @@
 import uuid
 import logging
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -44,7 +46,7 @@ async def get_sistemas_autorizados(db: AsyncSession, skip: int = 0, limit: int =
         logger.error(f"Erro de banco de dados ao listar sistemas autorizados: {e}")
         raise e # Levantar para o router retornar um 500
 
-async def get_sistema_autorizado_by_id(db: AsyncSession, sistema_id: int) -> SistemaAutorizado | None:
+async def get_sistema_autorizado_by_id(db: AsyncSession, sistema_id: int) -> Optional[SistemaAutorizado]:
     try:
         result = await db.execute(select(SistemaAutorizado).where(SistemaAutorizado.id == sistema_id))
         return result.scalar_one_or_none()
@@ -52,7 +54,7 @@ async def get_sistema_autorizado_by_id(db: AsyncSession, sistema_id: int) -> Sis
         logger.error(f"Erro de banco de dados ao buscar sistema autorizado por ID {sistema_id}: {e}")
         return None # Deixar o router tratar o None (404) ou a exceção (500)
 
-async def get_sistema_autorizado_by_token(db: AsyncSession, token: str) -> SistemaAutorizado | None:
+async def get_sistema_autorizado_by_token(db: AsyncSession, token: str) -> Optional[SistemaAutorizado]:
     try:
         result = await db.execute(select(SistemaAutorizado).where(SistemaAutorizado.token == token))
         return result.scalar_one_or_none()
@@ -60,7 +62,7 @@ async def get_sistema_autorizado_by_token(db: AsyncSession, token: str) -> Siste
         logger.error(f"Erro de banco de dados ao buscar sistema autorizado por token: {e}")
         return None
 
-async def validar_token_sistema(db: AsyncSession, token: str) -> SistemaAutorizado | None:
+async def validar_token_sistema(db: AsyncSession, token: str) -> Optional[SistemaAutorizado]:
     try:
         sistema = await get_sistema_autorizado_by_token(db, token)
         if sistema and sistema.ativo:
@@ -72,7 +74,7 @@ async def validar_token_sistema(db: AsyncSession, token: str) -> SistemaAutoriza
         # Neste caso, é mais seguro considerar o token inválido ou inacessível
         return None 
 
-async def atualizar_ultima_atividade_sistema(db: AsyncSession, sistema_id: int) -> SistemaAutorizado | None:
+async def atualizar_ultima_atividade_sistema(db: AsyncSession, sistema_id: int) -> Optional[SistemaAutorizado]:
     try:
         sistema = await get_sistema_autorizado_by_id(db, sistema_id)
         if sistema:

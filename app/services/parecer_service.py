@@ -1,4 +1,6 @@
 import logging
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -32,7 +34,7 @@ async def get_pareceres(db: AsyncSession, skip: int = 0, limit: int = 100) -> li
         logger.error(f"Erro de banco de dados ao listar pareceres: {e}")
         raise e # Levantar para o router retornar um 500
 
-async def get_parecer_by_id(db: AsyncSession, parecer_id: int) -> Parecer | None:
+async def get_parecer_by_id(db: AsyncSession, parecer_id: int) -> Optional[Parecer]:
     try:
         result = await db.execute(select(Parecer).where(Parecer.id == parecer_id))
         return result.scalar_one_or_none()

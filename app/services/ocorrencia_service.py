@@ -1,4 +1,6 @@
 import logging
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -34,7 +36,7 @@ async def get_ocorrencias(db: AsyncSession, skip: int = 0, limit: int = 100) -> 
         # Por ora, levantar para o router retornar um 500
         raise e
 
-async def get_ocorrencia_by_id(db: AsyncSession, ocorrencia_id: int) -> Ocorrencia | None:
+async def get_ocorrencia_by_id(db: AsyncSession, ocorrencia_id: int) -> Optional[Ocorrencia]:
     try:
         result = await db.execute(select(Ocorrencia).filter(Ocorrencia.id == ocorrencia_id))
         return result.scalars().first()

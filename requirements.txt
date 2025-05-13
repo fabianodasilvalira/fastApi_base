@@ -13,4 +13,5 @@ fastapi-mail
 Jinja2
 python-multipart
 bcrypt
+aiosqlite
 

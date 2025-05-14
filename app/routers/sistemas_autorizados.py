@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Query, Path
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from typing import List, Optional
@@ -108,7 +111,7 @@ async def listar_sistemas_autorizados(
 async def obter_sistema_autorizado(
     sistema_id: int = Path(..., description="ID do sistema autorizado a ser buscado."),
     db: AsyncSession = Depends(get_async_db),
-    admin_user: models.User = Depends(require_admin_user),
+    #admin_user: models.User = Depends(require_admin_user),
     authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -155,44 +158,6 @@ async def validar_token(
             detail=f"Ocorreu um erro inesperado ao processar a validação do token. Tente novamente. Erro: {str(e)}"
         )
 
-@router.put(
-    "/{sistema_id}/ultima-atividade/", 
-    response_model=SistemaAutorizadoResponse,
-    summary="Atualizar Última Atividade do Sistema (Admin + Sistema Autorizado)",
-    description="Atualiza o campo 'ultima_atividade' de um sistema cliente específico. Requer autenticação de usuário Admin E X-API-KEY de sistema autorizado.",
-    responses={
-        status.HTTP_200_OK: {"description": "Última atividade atualizada com sucesso."},
-        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
-        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
-        status.HTTP_404_NOT_FOUND: {"description": "Sistema não encontrado para atualizar última atividade."},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
-    }
-)
-async def atualizar_ultima_atividade(
-    sistema_id: int = Path(..., description="ID do sistema para atualizar a última atividade."), 
-    db: AsyncSession = Depends(get_async_db),
-    admin_user: models.User = Depends(require_admin_user),
-    authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
-):
-    try:
-        sistema_atualizado = await sistemas_autorizados_service.atualizar_ultima_atividade_sistema(db, sistema_id=sistema_id)
-        if sistema_atualizado is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Sistema com ID {sistema_id} não encontrado para atualizar última atividade.")
-        return sistema_atualizado
-    except SQLAlchemyError as e:
-        await db.rollback() # Embora o service possa não ter feito commit se retornou None
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ocorreu um erro de banco de dados ao atualizar a última atividade do sistema {sistema_id}. Tente novamente. Erro: {str(e)}"
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ocorreu um erro inesperado ao atualizar a última atividade do sistema {sistema_id}. Tente novamente. Erro: {str(e)}"
-        )
 
 @router.put(
     "/{sistema_id}", 
@@ -214,7 +179,7 @@ async def atualizar_sistema_autorizado(
     sistema_update: schemas.SistemaAutorizadoUpdate,
     sistema_id: int = Path(..., description="ID do sistema autorizado a ser atualizado."),
     db: AsyncSession = Depends(get_async_db),
-    admin_user: models.User = Depends(require_admin_user),
+    #admin_user: models.User = Depends(require_admin_user),
     authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
 
@@ -252,8 +217,7 @@ async def atualizar_sistema_autorizado(
             detail=f"Ocorreu um erro inesperado ao atualizar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
         )
 
-
-@router.put(
+@router.patch(
     "/{sistema_id}",
     response_model=SistemaAutorizadoResponse,  # Ou um schema de confirmação
     summary="Inativar Sistema Autorizado (Admin + Sistema Autorizado)",
@@ -269,7 +233,7 @@ async def atualizar_sistema_autorizado(
 async def inativar_sistema_autorizado(
         sistema_id: int = Path(..., description="ID do sistema autorizado a ser inativado."),
         db: AsyncSession = Depends(get_async_db),
-        admin_user: models.User = Depends(require_admin_user),
+        # admin_user: models.User = Depends(require_admin_user),
         authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -281,20 +245,30 @@ async def inativar_sistema_autorizado(
 
         # Inativar o sistema autorizado (exemplo: atualizar o campo 'ativo' para False)
         db_sistema.ativo = False  # Supondo que a tabela tenha um campo 'ativo'
-        await db.commit()
+
+        # Atualizar o campo 'ultima_atividade' para o timestamp atual
+        db_sistema.ultima_atividade = datetime.utcnow()
+
+        await db.commit()  # Confirma as alterações no banco
+
+        # Verifique se o sistema foi realmente inativado
+        await db.refresh(db_sistema)  # Refresca o objeto do banco para garantir que as mudanças foram aplicadas
 
         return db_sistema  # Retorna o sistema com o status atualizado
     except SQLAlchemyError as e:
-        await db.rollback()
+        await db.rollback()  # Caso ocorra um erro no banco de dados, desfaz as alterações
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ocorreu um erro de banco de dados ao inativar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
         )
     except HTTPException as e:
-        raise e
+        raise e  # Propaga exceções HTTP
     except Exception as e:
-        await db.rollback()
+        await db.rollback()  # Desfaz as alterações em caso de erro inesperado
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ocorreu um erro inesperado ao inativar o sistema autorizado {sistema_id}. Tente novamente. Erro: {str(e)}"
         )
+
+
+

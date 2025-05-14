@@ -15,7 +15,6 @@ from .sistemas_autorizados_service import ( # Adicionado Sistemas Autorizados Se
     validar_token_sistema,
     atualizar_ultima_atividade_sistema,
     update_sistema_autorizado,
-    delete_sistema_autorizado
 )
 
 __all__ = [
@@ -35,5 +34,4 @@ __all__ = [
     "validar_token_sistema",
     "atualizar_ultima_atividade_sistema",
     "update_sistema_autorizado",
-    "delete_sistema_autorizado"
 ]

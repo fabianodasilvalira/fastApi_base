@@ -110,13 +110,5 @@ async def update_sistema_autorizado(db: AsyncSession, db_sistema: SistemaAutoriz
         logger.error(f"Erro de banco de dados ao atualizar sistema autorizado {db_sistema.id}: {e}")
         raise e
 
-async def delete_sistema_autorizado(db: AsyncSession, db_sistema: SistemaAutorizado) -> SistemaAutorizado:
-    try:
-        await db.delete(db_sistema)
-        await db.commit()
-        return db_sistema
-    except SQLAlchemyError as e:
-        await db.rollback()
-        logger.error(f"Erro de banco de dados ao deletar sistema autorizado {db_sistema.id}: {e}")
-        raise e
+
 

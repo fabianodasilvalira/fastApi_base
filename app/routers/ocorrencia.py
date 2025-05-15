@@ -1,13 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from typing import List
+from typing import List, Optional # Optional adicionado
+from datetime import date # Adicionado
 
 from app import models, schemas
 from app.db.session import get_async_db
-from app.schemas.ocorrencia_schemas import OcorrenciaOut, OcorrenciaCreate, OcorrenciaUpdate
+# Schemas atualizados e novos adicionados
+from app.schemas.ocorrencia_schemas import (
+    OcorrenciaOut, 
+    OcorrenciaCreate, 
+    OcorrenciaUpdate, 
+    OcorrenciaFilterParams,
+    OcorrenciaWithPareceresOut
+)
 from app.services import ocorrencia_service
-from app.core.dependencies import get_current_authorized_system, require_admin_user
+from app.core.dependencies import get_current_authorized_system, require_admin_user # Supondo que estas dependências são necessárias para todas as rotas
 from app.models.sistemas_autorizados import SistemaAutorizado
 
 router = APIRouter()
@@ -64,12 +72,12 @@ async def create_ocorrencia_endpoint(
             detail=f"Erro inesperado. Erro: {str(e)}"
         )
 
-
+# Rota GET / modificada para incluir filtros
 @router.get(
     "/",
     response_model=List[OcorrenciaOut],
-    summary="Listar Todas as Ocorrências (Admin + Sistema Autorizado)",
-    description="Lista todas as ocorrências com paginação. Requer autenticação de usuário Admin E sistema autorizado.",
+    summary="Listar Todas as Ocorrências com Filtros (Admin + Sistema Autorizado)",
+    description="Lista todas as ocorrências com paginação e filtros opcionais. Requer autenticação de usuário Admin E sistema autorizado.",
     responses={
         status.HTTP_200_OK: {"description": "Lista de ocorrências retornada."},
         status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
@@ -80,22 +88,146 @@ async def create_ocorrencia_endpoint(
 async def read_ocorrencias_endpoint(
     skip: int = Query(0, ge=0, description="Número de registros a pular."),
     limit: int = Query(100, ge=1, le=200, description="Máximo de registros a retornar."),
+    filters: OcorrenciaFilterParams = Depends(), # Filtros adicionados
     db: AsyncSession = Depends(get_async_db),
     current_user: models.User = Depends(require_admin_user),
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
-        return await ocorrencia_service.get_ocorrencias(db, skip, limit)
+        # O service get_ocorrencias foi atualizado para receber 'filters'
+        return await ocorrencia_service.get_ocorrencias(db, filters=filters, skip=skip, limit=limit)
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro de banco de dados. Erro: {str(e)}"
+            detail=f"Erro de banco de dados ao listar ocorrências: {str(e)}"
         )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro inesperado. Erro: {str(e)}"
+            detail=f"Erro inesperado ao listar ocorrências: {str(e)}"
         )
+
+# Nova rota: Listar ocorrências por usuario_id
+@router.get(
+    "/por-usuario/{user_id}",
+    response_model=List[OcorrenciaOut],
+    summary="Listar Ocorrências por ID do Usuário (Admin + Sistema Autorizado)",
+    description="Lista ocorrências filtradas pelo ID do usuário criador, com filtros opcionais. Requer autenticação de usuário Admin E sistema autorizado.",
+    responses={
+        status.HTTP_200_OK: {"description": "Lista de ocorrências retornada."},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
+        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
+    }
+)
+async def read_ocorrencias_by_user_id_endpoint(
+    user_id: int = Path(..., description="ID do usuário criador da ocorrência."),
+    skip: int = Query(0, ge=0, description="Número de registros a pular."),
+    limit: int = Query(100, ge=1, le=200, description="Máximo de registros a retornar."),
+    filters: OcorrenciaFilterParams = Depends(),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: models.User = Depends(require_admin_user),
+    authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
+):
+    try:
+        return await ocorrencia_service.get_ocorrencias_by_user_id(db, user_id=user_id, filters=filters, skip=skip, limit=limit)
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro de banco de dados: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro inesperado: {str(e)}")
+
+# Nova rota: Listar ocorrências por usuario_encaminhado
+@router.get(
+    "/por-usuario-encaminhado/{usuario_encaminhado_id}",
+    response_model=List[OcorrenciaOut],
+    summary="Listar Ocorrências por ID do Usuário Encaminhado (Admin + Sistema Autorizado)",
+    description="Lista ocorrências filtradas pelo ID do usuário para quem foi encaminhada (padrão não arquivadas), com filtros opcionais. Requer autenticação de usuário Admin E sistema autorizado.",
+    responses={
+        status.HTTP_200_OK: {"description": "Lista de ocorrências retornada."},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
+        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
+    }
+)
+async def read_ocorrencias_by_usuario_encaminhado_endpoint(
+    usuario_encaminhado_id: int = Path(..., description="ID do usuário para quem a ocorrência foi encaminhada."),
+    skip: int = Query(0, ge=0, description="Número de registros a pular."),
+    limit: int = Query(100, ge=1, le=200, description="Máximo de registros a retornar."),
+    filters: OcorrenciaFilterParams = Depends(), # O service aplicará arquivado='N' por padrão se não vier em filters
+    db: AsyncSession = Depends(get_async_db),
+    current_user: models.User = Depends(require_admin_user),
+    authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
+):
+    try:
+        return await ocorrencia_service.get_ocorrencias_by_usuario_encaminhado(db, usuario_encaminhado_id=usuario_encaminhado_id, filters=filters, skip=skip, limit=limit)
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro de banco de dados: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro inesperado: {str(e)}")
+
+# Nova rota: Listar ocorrências por orgao_encaminhado
+@router.get(
+    "/por-orgao-encaminhado/{orgao_encaminhado_id}",
+    response_model=List[OcorrenciaOut],
+    summary="Listar Ocorrências por ID do Órgão Encaminhado (Admin + Sistema Autorizado)",
+    description="Lista ocorrências filtradas pelo ID do órgão para quem foi encaminhada (padrão não arquivadas), com filtros opcionais. Requer autenticação de usuário Admin E sistema autorizado.",
+    responses={
+        status.HTTP_200_OK: {"description": "Lista de ocorrências retornada."},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
+        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
+    }
+)
+async def read_ocorrencias_by_orgao_encaminhado_endpoint(
+    orgao_encaminhado_id: int = Path(..., description="ID do órgão para quem a ocorrência foi encaminhada."),
+    skip: int = Query(0, ge=0, description="Número de registros a pular."),
+    limit: int = Query(100, ge=1, le=200, description="Máximo de registros a retornar."),
+    filters: OcorrenciaFilterParams = Depends(), # O service aplicará arquivado='N' por padrão se não vier em filters
+    db: AsyncSession = Depends(get_async_db),
+    current_user: models.User = Depends(require_admin_user),
+    authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
+):
+    try:
+        return await ocorrencia_service.get_ocorrencias_by_orgao_encaminhado(db, orgao_encaminhado_id=orgao_encaminhado_id, filters=filters, skip=skip, limit=limit)
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro de banco de dados: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro inesperado: {str(e)}")
+
+# Nova rota: Listar ocorrencia_id com todos pareceres
+@router.get(
+    "/{ocorrencia_id}/com-pareceres",
+    response_model=OcorrenciaWithPareceresOut, # Schema de resposta que inclui pareceres
+    summary="Obter Ocorrência por ID com Todos os Pareceres (Admin + Sistema Autorizado)",
+    description="Busca uma ocorrência específica por ID e inclui todos os seus pareceres. Filtros opcionais se aplicam à ocorrência. Requer autenticação de usuário Admin E sistema autorizado.",
+    responses={
+        status.HTTP_200_OK: {"description": "Ocorrência com pareceres encontrada."},
+        status.HTTP_404_NOT_FOUND: {"description": "Ocorrência não encontrada."},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
+        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
+    }
+)
+async def read_ocorrencia_with_pareceres_endpoint(
+    ocorrencia_id: int = Path(..., description="ID da ocorrência."),
+    filters: OcorrenciaFilterParams = Depends(), # Filtros se aplicam à ocorrência principal
+    db: AsyncSession = Depends(get_async_db),
+    current_user: models.User = Depends(require_admin_user),
+    authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
+):
+    try:
+        # O service get_ocorrencia_by_id_with_pareceres foi atualizado para receber 'filters'
+        # e o service lida com o padrão 'arquivado=N' para a ocorrência principal se não especificado
+        db_ocorrencia = await ocorrencia_service.get_ocorrencia_by_id_with_pareceres(db, ocorrencia_id=ocorrencia_id, filters=filters)
+        if db_ocorrencia is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ocorrência com ID {ocorrencia_id} não encontrada ou não corresponde aos filtros.")
+        return db_ocorrencia
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro de banco de dados: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro inesperado: {str(e)}")
 
 
 @router.get(
@@ -118,6 +250,7 @@ async def read_ocorrencia_endpoint(
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
+        # Este endpoint não usa os novos filtros, mantém o comportamento original
         db_ocorrencia = await ocorrencia_service.get_ocorrencia_by_id(db, ocorrencia_id)
         if db_ocorrencia is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ocorrência com ID {ocorrencia_id} não encontrada.")
@@ -193,3 +326,4 @@ async def update_ocorrencia_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro inesperado ao atualizar a ocorrência. Erro: {str(e)}"
         )
+

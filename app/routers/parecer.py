@@ -90,7 +90,7 @@ async def criar_parecer(
     }
 )
 async def listar_pareceres(
-        skip: int = Query(0, ge=0, description="Número de registros a pular para paginação."),
+        skip: int = Query(0, ge=0, description="Registro inicial a partir do qual os resultados serão exibidos (usado para paginação)."),
         limit: int = Query(100, ge=1, le=200, description="Número máximo de registros a retornar."),
         db: AsyncSession = Depends(get_async_db),
         current_user: models.User = Depends(require_admin_user),

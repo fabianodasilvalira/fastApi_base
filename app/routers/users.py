@@ -25,7 +25,7 @@ router = APIRouter()
 )
 async def obter_todos_usuarios(
     db: AsyncSession = Depends(get_db),
-    skip: int = Query(0, ge=0, description="Número de registros a pular para paginação."),
+    skip: int = Query(0, ge=0, description="Registro inicial a partir do qual os resultados serão exibidos (usado para paginação)."),
     limit: int = Query(10, ge=1, description="Número máximo de registros a retornar.")
 ) -> List[UserOut]:
     usuarios = await user_service.get_all_users(db, skip=skip, limit=limit)

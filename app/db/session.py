@@ -2,7 +2,7 @@ import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
-from typing import AsyncGenerator # Importar AsyncGenerator
+from typing import AsyncGenerator  # Importar AsyncGenerator
 
 # Carrega as variáveis de ambiente do arquivo .env
 # Ajuste o caminho se necessário
@@ -40,10 +40,10 @@ if not DATABASE_URL:
         raise ValueError("DATABASE_URL não configurada no .env e settings.DATABASE_URL não encontrado.")
 
 
-# Cria uma engine assíncrona do SQLAlchemy
+# Cria uma engine assíncrona do SQLAlchemy para produção
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
-# Cria uma fábrica de sessões assíncronas
+# Cria uma fábrica de sessões assíncronas para produção
 AsyncSessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
@@ -53,21 +53,41 @@ AsyncSessionLocal = sessionmaker(
 )
 
 # Função para obter uma sessão de banco de dados (usada como dependência no FastAPI)
-# Removido @asynccontextmanager e ajustado para ser um async generator padrão
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit() # Commit no final se tudo correu bem
+            await session.commit() # Commit no final se tudo correr bem
         except Exception:
             await session.rollback() # Rollback em caso de erro
             raise
         finally:
             await session.close() # Garante que a sessão seja fechada
 
-# Comentários explicativos:
-# - DATABASE_URL deve ser algo como: mysql+aiomysql://user:password@localhost:3306/dbname ou sqlite+aiosqlite:///./test.db
-# - echo=True imprime as queries no console, útil para debug.
-# - future=True usa a API 2.0 do SQLAlchemy.
-# - get_async_db é usado com Depends(get_async_db) em rotas para injetar uma sessão do banco.
 
+# Banco de dados fake para testes (você precisa configurar)
+DATABASE_URL_TEST = "sqlite+aiosqlite:///:memory:"  # Banco de dados SQLite em memória para testes
+
+# Criando a engine para o banco de dados de testes
+engine_test = create_async_engine(DATABASE_URL_TEST, echo=True, future=True)
+
+# Criando a fábrica de sessões para o banco de dados de testes
+async_session_maker_test = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine_test,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+# Função para obter uma sessão de banco de dados de testes (usada para os testes)
+async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session_maker_test() as session:
+        try:
+            yield session
+            await session.commit()  # Commit no final, se tudo correr bem
+        except Exception:
+            await session.rollback()  # Rollback em caso de erro
+            raise
+        finally:
+            await session.close()  # Garante que a sessão será fechada

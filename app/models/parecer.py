@@ -15,7 +15,7 @@ class Parecer(Base):
     parecer_usuario_id = Column(Integer, nullable=True)
     encam_orgao_id = Column(Integer, nullable=True)
     encam_usuario_id = Column(Integer, nullable=True)
-    url_file = Column(String, nullable=True)
+    url_file = Column(String(255), nullable=True)  # Certifique-se de definir o comprimento aqui
     cadastro = Column(DateTime, default=datetime.utcnow)
     atualizacao = Column(DateTime, nullable=True)
     reg_atualizado = Column(String(1), default="S")

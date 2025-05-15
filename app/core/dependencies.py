@@ -7,7 +7,7 @@ from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession # Para get_db assíncrono
 
 from app.core import security
-from app.models.user import User, UserRole # UserRole para require_admin_user
+from app.models.user import User
 from app.models.sistemas_autorizados import SistemaAutorizado # Modelo para autenticação de sistema
 from app.db.session import get_async_db # Função para obter sessão assíncrona do DB
 from app.services import user_service # Mantido para autenticação de usuário

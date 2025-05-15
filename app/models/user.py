@@ -1,26 +1,28 @@
-from sqlalchemy import Column, Integer, String, Enum as SQLAlchemyEnum, Boolean, DateTime
-from sqlalchemy.orm import relationship
-from enum import Enum
-import datetime
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
-from app.db.base_class import Base
+Base = declarative_base()
 
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    CLIENTE = "cliente"
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "user"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    cpf = Column(String(14), unique=True, index=True, nullable=False)  # CPF adicionado, 11 dígitos + máscara
-    hashed_password = Column(String(255), nullable=False)
-    full_name = Column(String(255), index=True, nullable=True) # Permitindo nome completo ser opcional inicialmente
-    role = Column(SQLAlchemyEnum(UserRole), default=UserRole.CLIENTE, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255), nullable=False)
+    cpf = Column(String(14), nullable=False, unique=True)
+    phone = Column(String(20), nullable=True)
+    perfil = Column(String(255), nullable=False, default="Usuário")
+    auth_key = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    password_reset_token = Column(String(255), nullable=True)
+    email = Column(String(255), nullable=False, unique=True)
+    status = Column(Integer, nullable=False, default=10)
 
-    is_email_verified = Column(Boolean, default=False, nullable=False)
-    email_verification_token = Column(String(255), unique=True, index=True, nullable=True)
-    password_reset_token = Column(String(255), unique=True, index=True, nullable=True)
-    token_expiry_date = Column(DateTime, nullable=True)
+    # Alterando para tipo Integer, que será o timestamp em segundos
+    created_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()))  # Converte para timestamp
+    updated_at = Column(Integer, default=lambda: int(datetime.utcnow().timestamp()),
+                        onupdate=lambda: int(datetime.utcnow().timestamp()))  # Converte para timestamp
 
+    verification_token = Column(String(255), nullable=True)

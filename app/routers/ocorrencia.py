@@ -10,39 +10,23 @@ from app.db.session import get_async_db
 from app.schemas.ocorrencia_schemas import OcorrenciaOut, OcorrenciaCreate, OcorrenciaUpdate, OcorrenciaFilterParams, \
     OcorrenciaWithPareceresOut
 from app.services import ocorrencia_service
-from app.core.dependencies import get_current_authorized_system, require_admin_user
+from app.core.dependencies import get_current_authorized_system, require_admin_user, get_current_active_user, \
+    get_current_user
 from app.models.sistemas_autorizados import SistemaAutorizado
 
 router = APIRouter()
-
-@router.post(
-    "/",
-    response_model=OcorrenciaOut,
-    status_code=status.HTTP_201_CREATED,
-    summary="Criar Nova Ocorrência (Admin + Sistema Autorizado)",
-    description="Cria uma nova ocorrência no sistema. Requer autenticação de usuário Admin E autenticação de sistema via X-API-KEY.",
-    responses={
-        status.HTTP_201_CREATED: {"description": "Ocorrência criada com sucesso."},
-        status.HTTP_400_BAD_REQUEST: {"description": "Dados de entrada inválidos."},
-        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
-        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
-        status.HTTP_409_CONFLICT: {"description": "Conflito de dados."},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"description": "Erro de validação nos dados."},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
-    }
-)
 
 
 @router.post("/ocorrencias")
 async def create_ocorrencia_endpoint(
     ocorrencia: OcorrenciaCreate,
     db: AsyncSession = Depends(get_async_db),
+    #current_user: models.User = Depends(get_current_user),
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
         user_data = None
 
-        # Se veio user_id na requisição, faz a busca do usuário no banco
         if ocorrencia.user_id:
             user_data = await db.get(models.User, ocorrencia.user_id)
             if not user_data:
@@ -51,21 +35,30 @@ async def create_ocorrencia_endpoint(
                     detail=f"Usuário com ID {ocorrencia.user_id} não encontrado."
                 )
 
+        # Converte para dicionário os campos enviados
         ocorrencia_dict = ocorrencia.model_dump()
 
+        # Adiciona os campos que não vêm no body, mas devem ser persistidos
+        ocorrencia_dict.update({
+            "situacao_ocorrencia_id": 1,
+            "tipo_atendimento_id": 10,
+            "programa_id": 6,
+            "regiao_id": 6,
+            "arquivado": "N"
+        })
+
         if user_data:
-            # Sobrescreve nome_completo e fone1 com os dados do usuário buscado
             ocorrencia_dict.update({
                 "nome_completo": user_data.name,
                 "fone1": user_data.phone,
             })
 
-        # Criação da ocorrência com dados atualizados
         nova_ocorrencia = models.Ocorrencia(**ocorrencia_dict)
         db.add(nova_ocorrencia)
         await db.commit()
         await db.refresh(nova_ocorrencia)
         return nova_ocorrencia
+
 
     except IntegrityError as e:
         await db.rollback()
@@ -93,12 +86,6 @@ async def create_ocorrencia_endpoint(
     response_model=List[OcorrenciaOut],
     summary="Listar Todas as Ocorrências (Admin + Sistema Autorizado)",
     description="Lista todas as ocorrências com paginação. Requer autenticação de usuário Admin E sistema autorizado.",
-    responses={
-        status.HTTP_200_OK: {"description": "Lista de ocorrências retornada."},
-        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
-        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
-    }
 )
 async def read_ocorrencias_endpoint(
     skip: int = Query(0, ge=0, description="Registro inicial a partir do qual os resultados serão exibidos (usado para paginação).."),

@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import date, time, datetime
 
 from fastapi import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, constr
 
 # Importar ParecerOut para o schema OcorrenciaWithPareceresOut
 from .parecer_schemas import ParecerOut # Adicionado
@@ -23,7 +23,7 @@ class OcorrenciaBase(BaseModel):
     fone1: Optional[str] = Field(None, max_length=15)
     fone2: Optional[str] = Field(None, max_length=15)
     email: Optional[str] = Field(None, max_length=100)
-    url_file: Optional[str] = Field(None, max_length=255)
+    url_file: Optional[constr(max_length=2000)] = None
     assunto: Optional[str] = Field(None, max_length=255)
     mensagem: Optional[str] = None # Text
     encaminhamento_orgao_id: Optional[int] = None

@@ -22,7 +22,7 @@ class Ocorrencia(Base):
     fone1 = Column(String(15), nullable=True)
     fone2 = Column(String(15), nullable=True)
     email = Column(String(100), nullable=True)
-    url_file = Column(String(255), nullable=True)  # Verifique se o comprimento está adequado para o tipo de dado
+    url_file = Column(Text, nullable=True)
     assunto = Column(String(255), nullable=True)
     mensagem = Column(Text, nullable=True)
     encaminhamento_orgao_id = Column(Integer, nullable=True)

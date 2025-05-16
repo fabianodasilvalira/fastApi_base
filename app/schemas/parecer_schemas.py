@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, constr
 from typing import Optional
 from datetime import datetime
 
@@ -11,22 +11,39 @@ class ParecerBase(BaseModel):
     parecer_usuario_id: Optional[int] = None
     encam_orgao_id: Optional[int] = None
     encam_usuario_id: Optional[int] = None
-    url_file: Optional[str] = None
+    url_file: Optional[constr(max_length=2000)] = None
     cadastro: Optional[datetime] = None
     atualizacao: Optional[datetime] = None
     reg_atualizado: Optional[str] = None
+
+    @validator('parecer_data', 'atualizacao', 'cadastro', pre=True)
+    def parse_datetime(cls, value):
+        if value in (None, '', '0000-00-00 00:00:00'):
+            return None
+        try:
+            if isinstance(value, datetime):
+                return value
+            if isinstance(value, int):
+                # timestamp pode estar em milissegundos
+                if value > 1e12:
+                    value = value / 1000
+                return datetime.fromtimestamp(value)
+            if isinstance(value, str):
+                return datetime.fromisoformat(value)
+            # Caso o valor seja outro tipo, tenta converter para string e parsear
+            return datetime.fromisoformat(str(value))
+        except Exception:
+            # Qualquer erro retorna None para não quebrar o sistema
+            return None
 
 class ParecerCreate(ParecerBase):
     pass
 
 class ParecerUpdate(ParecerBase):
-    # Todos os campos são opcionais na atualização
     ocorrencia_id: Optional[int] = None
-    pass # Herda todos os campos de ParecerBase como opcionais implicitamente se não redefinidos
 
 class ParecerOut(ParecerBase):
     id: int
 
     class Config:
-        from_attributes = True # Alterado de orm_mode para Pydantic v2
-
+        from_attributes = True  # Equivalente ao antigo orm_mode

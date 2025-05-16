@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
+from msilib.schema import File
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from typing import List
@@ -9,6 +11,9 @@ from app.services import parecer_service
 from app.db.session import get_async_db
 from app.core.dependencies import get_current_authorized_system, require_admin_user
 from app.models.sistemas_autorizados import SistemaAutorizado  # Importar o modelo para type hint
+from fastapi import UploadFile, File
+import os
+from uuid import uuid4
 
 # O prefixo é definido no main.py como /api/v1/pareceres
 router = APIRouter()
@@ -215,4 +220,59 @@ async def atualizar_parecer(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ocorreu um erro inesperado ao atualizar o parecer {parecer_id}. Tente novamente. Erro: {str(e)}"
+        )
+
+
+@router.put(
+    "/{parecer_id}/anexo",
+    response_model=parecer_schemas.ParecerOut,
+    summary="Atualizar anexo do parecer (Admin + Sistema Autorizado)",
+    description="Permite fazer upload e associar um novo anexo a um parecer existente.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Anexo atualizado com sucesso."},
+        status.HTTP_400_BAD_REQUEST: {"description": "Arquivo inválido."},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Não autorizado."},
+        status.HTTP_403_FORBIDDEN: {"description": "Proibido."},
+        status.HTTP_404_NOT_FOUND: {"description": "Parecer não encontrado."},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
+    }
+)
+async def atualizar_anexo_parecer(
+    parecer_id: int = Path(..., description="ID do parecer que receberá o novo anexo."),
+    arquivo: UploadFile = File(..., description="Arquivo a ser anexado ao parecer."),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: models.User = Depends(require_admin_user),
+    authorized_system: SistemaAutorizado = Depends(get_current_authorized_system),
+):
+    try:
+        parecer = await parecer_service.get_parecer_by_id(db, parecer_id)
+        if not parecer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Parecer com ID {parecer_id} não encontrado."
+            )
+
+        # Gerar nome único e salvar o arquivo
+        extensao = os.path.splitext(arquivo.filename)[1]
+        nome_arquivo = f"{uuid4().hex}{extensao}"
+        caminho_destino = os.path.join("uploads/pareceres", nome_arquivo)
+
+        os.makedirs(os.path.dirname(caminho_destino), exist_ok=True)
+        with open(caminho_destino, "wb") as f:
+            conteudo = await arquivo.read()
+            f.write(conteudo)
+
+        # Atualizar o campo de anexo
+        parecer.anexo = caminho_destino
+        await db.commit()
+        await db.refresh(parecer)
+
+        return parecer
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao atualizar anexo do parecer. {str(e)}"
         )

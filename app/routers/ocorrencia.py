@@ -32,18 +32,39 @@ router = APIRouter()
 async def create_ocorrencia_endpoint(
     ocorrencia: OcorrenciaCreate,
     db: AsyncSession = Depends(get_async_db),
-    #current_user: models.User = Depends(require_admin_user),
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
+        # ⚠️ Verifica e busca o usuário, se fornecido
+        user_data = None
         if ocorrencia.user_id:
-            user_check = await db.get(models.User, ocorrencia.user_id)
-            if not user_check:
+            user_data = await db.get(models.User, ocorrencia.user_id)
+            if not user_data:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Usuário com ID {ocorrencia.user_id} não encontrado."
                 )
-        return await ocorrencia_service.create_ocorrencia(db, ocorrencia)
+
+        # 🛠️ Monta novo objeto com valores fixos e dados do usuário
+        ocorrencia_dict = ocorrencia.model_dump()
+        ocorrencia_dict.update({
+            "situacao_ocorrencia_id": 1,
+            "regiao_id": 6,
+            "programa_id": 6,
+            "tipo_atendimento_id": 10,
+        })
+
+        # Se encontrou o usuário, preenche nome_completo e fones
+        if user_data:
+            ocorrencia_dict.update({
+                "nome_completo": user_data.nome_completo,
+                "fone1": user_data.fone1,
+                "fone2": user_data.fone2
+            })
+
+        # Cria a ocorrência
+        return await ocorrencia_service.create_ocorrencia(db, OcorrenciaCreate(**ocorrencia_dict))
+
     except IntegrityError as e:
         await db.rollback()
         raise HTTPException(
@@ -64,7 +85,6 @@ async def create_ocorrencia_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro inesperado. Erro: {str(e)}"
         )
-
 
 
 

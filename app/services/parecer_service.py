@@ -1,10 +1,14 @@
 import logging
+import os
 from typing import Optional
 
+from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
+from app import models
+from app.core.config import settings
 from app.models.parecer import Parecer
 from app.schemas.parecer_schemas import ParecerCreate, ParecerUpdate
 
@@ -74,3 +78,35 @@ async def delete_parecer(db: AsyncSession, db_parecer: Parecer) -> Parecer:
         logger.error(f"Erro de banco de dados ao deletar parecer {db_parecer.id}: {e}")
         raise e
 
+
+async def update_anexo_parecer(
+    db: AsyncSession,
+    parecer_id: int,
+    arquivo: UploadFile
+) -> models.Parecer:
+    # Verificar se o parecer existe
+    resultado = await db.execute(select(models.Parecer).where(models.Parecer.id == parecer_id))
+    parecer = resultado.scalar_one_or_none()
+
+    if not parecer:
+        raise Exception(f"Parecer com ID {parecer_id} não encontrado.")
+
+    # Gerar nome seguro para o arquivo
+    filename = f"parecer_{parecer_id}_{arquivo.filename}"
+    upload_dir = settings.UPLOAD_DIR
+    os.makedirs(upload_dir, exist_ok=True)
+
+    file_path = os.path.join(upload_dir, filename)
+
+    # Salvar o arquivo no disco
+    with open(file_path, "wb") as buffer:
+        content = await arquivo.read()
+        buffer.write(content)
+
+    # Atualizar o caminho do anexo no parecer
+    parecer.anexo = filename
+    db.add(parecer)
+    await db.commit()
+    await db.refresh(parecer)
+
+    return parecer

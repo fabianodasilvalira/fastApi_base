@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = int(os.getenv("EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS", "48"))
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = int(os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_HOURS", "1"))
 
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads/pareceres")
+
+
     class Config:
         env_file_encoding = "utf-8"
         case_sensitive = True 

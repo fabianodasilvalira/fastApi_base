@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import selectinload
 
+from app import models
 from app.models.ocorrencia import Ocorrencia
 from app.schemas.ocorrencia_schemas import OcorrenciaCreate, OcorrenciaUpdate, OcorrenciaFilterParams
 
@@ -34,14 +35,15 @@ async def create_ocorrencia(db: AsyncSession, ocorrencia: OcorrenciaCreate) -> O
         await db.commit()
         await db.refresh(db_ocorrencia)
         return db_ocorrencia
-    except IntegrityError as e: # Caso haja alguma constraint violada (ex: FK para user_id inexistente)
+    except IntegrityError as e:
         await db.rollback()
         logger.error(f"Erro de integridade ao criar ocorrência: {e}")
-        raise e # Repassar para o router tratar
+        raise e
     except SQLAlchemyError as e:
         await db.rollback()
         logger.error(f"Erro de banco de dados ao criar ocorrência: {e}")
-        raise e # Repassar para o router tratar
+        raise e
+
 
 async def get_ocorrencias(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[Ocorrencia]:
     try:

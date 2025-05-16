@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from typing import List
 
+from sqlalchemy.sql.functions import current_user
+
 from app import models, schemas
 from app.db.session import get_async_db
 from app.schemas.ocorrencia_schemas import OcorrenciaOut, OcorrenciaCreate, OcorrenciaUpdate, OcorrenciaFilterParams, \
@@ -29,14 +31,18 @@ router = APIRouter()
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Erro interno do servidor."}
     }
 )
+
+
+@router.post("/ocorrencias")
 async def create_ocorrencia_endpoint(
     ocorrencia: OcorrenciaCreate,
     db: AsyncSession = Depends(get_async_db),
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
-        # ⚠️ Verifica e busca o usuário, se fornecido
         user_data = None
+
+        # Se veio user_id na requisição, faz a busca do usuário no banco
         if ocorrencia.user_id:
             user_data = await db.get(models.User, ocorrencia.user_id)
             if not user_data:
@@ -45,25 +51,21 @@ async def create_ocorrencia_endpoint(
                     detail=f"Usuário com ID {ocorrencia.user_id} não encontrado."
                 )
 
-        # 🛠️ Monta novo objeto com valores fixos e dados do usuário
         ocorrencia_dict = ocorrencia.model_dump()
-        ocorrencia_dict.update({
-            "situacao_ocorrencia_id": 1,
-            "regiao_id": 6,
-            "programa_id": 6,
-            "tipo_atendimento_id": 10,
-        })
 
-        # Se encontrou o usuário, preenche nome_completo e fones
         if user_data:
+            # Sobrescreve nome_completo e fone1 com os dados do usuário buscado
             ocorrencia_dict.update({
-                "nome_completo": user_data.nome_completo,
-                "fone1": user_data.fone1,
-                "fone2": user_data.fone2
+                "nome_completo": user_data.name,
+                "fone1": user_data.phone,
             })
 
-        # Cria a ocorrência
-        return await ocorrencia_service.create_ocorrencia(db, OcorrenciaCreate(**ocorrencia_dict))
+        # Criação da ocorrência com dados atualizados
+        nova_ocorrencia = models.Ocorrencia(**ocorrencia_dict)
+        db.add(nova_ocorrencia)
+        await db.commit()
+        await db.refresh(nova_ocorrencia)
+        return nova_ocorrencia
 
     except IntegrityError as e:
         await db.rollback()
@@ -85,8 +87,6 @@ async def create_ocorrencia_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro inesperado. Erro: {str(e)}"
         )
-
-
 
 @router.get(
     "/",

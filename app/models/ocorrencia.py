@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import Column, Integer, String, Date, Time, DateTime, Boolean, Text, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Time, DateTime, Boolean, Text, Float, ForeignKey, CHAR
 from sqlalchemy.orm import relationship # Adicionar relationship
 
 from app.db.base_class import Base # Corrigido para usar a Base correta do projeto
@@ -19,11 +19,11 @@ class Ocorrencia(Base):
     tipo_ocorrencia_id = Column(Integer, nullable=True)
     protocolo = Column(String(20), nullable=True)
     regiao_id = Column(Integer, nullable=False)
-    sigilo = Column(String(1), nullable=True)
+    sigilo = Column(CHAR(1),  nullable=True, default="N")
     nome_completo = Column(String(150), nullable=True)
     endereco = Column(String(255), nullable=True)
-    fone1 = Column(String(15), nullable=True)
-    fone2 = Column(String(15), nullable=True)
+    fone1 = Column(CHAR(15), nullable=True)
+    fone2 = Column(CHAR(15), nullable=True)
     email = Column(String(100), nullable=True)
     url_file = Column(Text, nullable=True)
     assunto = Column(String(255), nullable=False)
@@ -34,8 +34,8 @@ class Ocorrencia(Base):
     parecer_usuario_id = Column(Integer, nullable=True)
     parecer_descricao = Column(Text, nullable=True)
     parecer_data = Column(DateTime, nullable=True)
-    notificar = Column(String(1), nullable=True)
-    notificado = Column(String(1), nullable=True)
+    notificar = Column(CHAR(1),  nullable=True, default=None)
+    notificado = Column(CHAR(1),  nullable=True, default="N")
     situacao_anterior = Column(Integer, nullable=True)
     programa_anterior = Column(Integer, nullable=True)
     tipo_atend_anterior = Column(Integer, nullable=True)
@@ -45,7 +45,7 @@ class Ocorrencia(Base):
     atualizacao = Column(DateTime, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
-    arquivado = Column(String(1), nullable=True, default="N")
+    arquivado = Column(CHAR(1), nullable=True, default="N")
 
     # Relacionamento com Parecer
     pareceres = relationship("Parecer", back_populates="ocorrencia")

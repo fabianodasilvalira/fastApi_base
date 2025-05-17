@@ -8,7 +8,7 @@ from app import models, schemas  # Adicionado para type hint de User e schemas
 from app.schemas import parecer_schemas
 from app.services import parecer_service
 from app.db.session import get_async_db
-from app.core.dependencies import get_current_authorized_system, require_admin_user
+from app.core.dependencies import get_current_authorized_system
 from app.models.sistemas_autorizados import SistemaAutorizado  # Importar o modelo para type hint
 from fastapi import UploadFile, File
 import os
@@ -40,7 +40,6 @@ router = APIRouter()
 async def criar_parecer(
         parecer: parecer_schemas.ParecerCreate,
         db: AsyncSession = Depends(get_async_db),
-        current_user: models.User = Depends(require_admin_user),
         authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -97,7 +96,6 @@ async def listar_pareceres(
         skip: int = Query(0, ge=0, description="Registro inicial a partir do qual os resultados serão exibidos (usado para paginação)."),
         limit: int = Query(100, ge=1, le=200, description="Número máximo de registros a retornar."),
         db: AsyncSession = Depends(get_async_db),
-        current_user: models.User = Depends(require_admin_user),
         authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -130,7 +128,6 @@ async def listar_pareceres(
 async def obter_parecer(
         parecer_id: int = Path(..., description="ID do parecer a ser buscado."),
         db: AsyncSession = Depends(get_async_db),
-        current_user: models.User = Depends(require_admin_user),
         authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -174,7 +171,6 @@ async def atualizar_parecer(
         parecer_update_data: parecer_schemas.ParecerUpdate,
         parecer_id: int = Path(..., description="ID do parecer a ser atualizado."),
         db: AsyncSession = Depends(get_async_db),
-        current_user: models.User = Depends(require_admin_user),
         authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -241,7 +237,6 @@ async def atualizar_anexo_parecer(
     parecer_id: int = Path(..., description="ID do parecer que receberá o novo anexo."),
     arquivo: UploadFile = File(..., description="Arquivo a ser anexado ao parecer."),
     db: AsyncSession = Depends(get_async_db),
-    current_user: models.User = Depends(require_admin_user),
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system),
 ):
     try:

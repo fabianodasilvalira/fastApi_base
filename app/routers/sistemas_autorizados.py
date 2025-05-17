@@ -10,7 +10,7 @@ from app import models, schemas # Import models for type hinting
 from app.schemas.sistemas_autorizados_schemas import SistemaAutorizadoComTokenResponse, SistemaAutorizadoResponse
 from app.services import sistemas_autorizados_service
 from app.db.session import get_async_db
-from app.core.dependencies import get_current_authorized_system, require_admin_user 
+from app.core.dependencies import get_current_authorized_system
 
 router = APIRouter()
 
@@ -33,7 +33,6 @@ router = APIRouter()
 async def criar_sistema_autorizado(
     sistema: schemas.SistemaAutorizadoCreate, 
     db: AsyncSession = Depends(get_async_db),
-    #admin_user: models.User = Depends(require_admin_user)
 ):
     try:
         # Verificar se já existe um sistema com o mesmo nome, se for uma constraint
@@ -78,7 +77,6 @@ async def listar_sistemas_autorizados(
     skip: int = Query(0, ge=0, description="Registro inicial a partir do qual os resultados serão exibidos (usado para paginação)."),
     limit: int = Query(100, ge=1, le=200, description="Número máximo de registros a retornar."), 
     db: AsyncSession = Depends(get_async_db),
-    # admin_user: models.User = Depends(require_admin_user),
     authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -111,7 +109,6 @@ async def listar_sistemas_autorizados(
 async def obter_sistema_autorizado(
     sistema_id: int = Path(..., description="ID do sistema autorizado a ser buscado."),
     db: AsyncSession = Depends(get_async_db),
-    #admin_user: models.User = Depends(require_admin_user),
     authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -179,7 +176,6 @@ async def atualizar_sistema_autorizado(
     sistema_update: schemas.SistemaAutorizadoUpdate,
     sistema_id: int = Path(..., description="ID do sistema autorizado a ser atualizado."),
     db: AsyncSession = Depends(get_async_db),
-    #admin_user: models.User = Depends(require_admin_user),
     authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
 
@@ -233,7 +229,6 @@ async def atualizar_sistema_autorizado(
 async def inativar_sistema_autorizado(
         sistema_id: int = Path(..., description="ID do sistema autorizado a ser inativado."),
         db: AsyncSession = Depends(get_async_db),
-        # admin_user: models.User = Depends(require_admin_user),
         authorized_system: models.SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:

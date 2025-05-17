@@ -49,13 +49,11 @@ class OcorrenciaCreate(BaseModel):
     tipo_ocorrencia_id: int
     assunto: str
     mensagem: str
-    user_id: int = 1
 
     protocolo: Optional[str] = None
-    sigilo: Optional[str] = Field("N", max_length=1)
-    endereco: Optional[str] = Field(None, max_length=255)
-    fone2: Optional[str] = Field(None, max_length=15)
-    email: Optional[str] = Field(None, max_length=100)
+    sigilo: Optional[str] = "N"
+    endereco: Optional[str] = None
+    fone2: Optional[str] = None
     url_file: Optional[constr(max_length=2000)] = None
     encaminhamento_orgao_id: Optional[int] = None
     encaminhamento_usuario_id: Optional[int] = None
@@ -63,8 +61,8 @@ class OcorrenciaCreate(BaseModel):
     parecer_usuario_id: Optional[int] = None
     parecer_descricao: Optional[str] = None
     parecer_data: Optional[datetime] = None
-    notificar: Optional[str] = Field(None, max_length=1)
-    notificado: Optional[str] = Field(None, max_length=1)
+    notificar: Optional[str]  = None
+    notificado: Optional[str] = "N"
     pessoa_id: Optional[int] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None

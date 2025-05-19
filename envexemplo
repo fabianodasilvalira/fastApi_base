@@ -1,16 +1,16 @@
 # === Configurações da Aplicação ===
-APP_NAME=FastAPI Base
+APP_NAME=Ami backend
 ENVIRONMENT=development
 DEBUG=True
 SECRET_KEY=sua_chave_secreta_segura
 
 # === Banco de Dados ===
 DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=db_ouvidoria
 DB_USER=root
-DB_PASSWORD=
-DATABASE_URL=mysql+aiomysql://root:@localhost:3306/db_ouvidoria
+DB_PASSWORD=senha123
+DB_PORT=3306
+DB_NAME=meubanco
+
 
 UPLOAD_DIR=uploads/pareceres
 

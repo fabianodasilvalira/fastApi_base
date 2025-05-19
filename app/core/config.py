@@ -1,4 +1,3 @@
-# Conteúdo para /home/ubuntu/fastapi_project/fastApi_base-main/app/core/config.py
 import os
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv

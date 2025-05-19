@@ -6,7 +6,7 @@ from typing import List
 from app import models, schemas
 from app.db.session import get_async_db
 from app.schemas.ocorrencia_schemas import OcorrenciaOut, OcorrenciaCreate, OcorrenciaUpdate, OcorrenciaFilterParams, \
-    OcorrenciaWithPareceresOut
+    OcorrenciaWithPareceresOut, PaginatedOcorrencias
 from app.services import ocorrencia_service
 from app.core.dependencies import get_current_authorized_system, get_current_active_user, \
     get_current_user
@@ -26,12 +26,8 @@ async def create_ocorrencia_endpoint(
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
-        logger.info("Início da criação da ocorrência")
-        logger.debug(f"Dados recebidos no body: {ocorrencia}")
-
         # Busca os dados completos do usuário autenticado
         user_data = current_user
-        logger.debug(f"Usuário autenticado: ID={user_data.id}, Email={user_data.email}")
 
         # Converte para dicionário os campos enviados
         ocorrencia_dict = ocorrencia.model_dump()
@@ -48,14 +44,11 @@ async def create_ocorrencia_endpoint(
             "fone1": user_data.phone,
         })
 
-        logger.debug(f"Dados finais da ocorrência a ser criada: {ocorrencia_dict}")
-
         nova_ocorrencia = models.Ocorrencia(**ocorrencia_dict)
         db.add(nova_ocorrencia)
         await db.commit()
         await db.refresh(nova_ocorrencia)
 
-        logger.info(f"Ocorrência criada com sucesso: ID={nova_ocorrencia.id}")
         return nova_ocorrencia
 
     except IntegrityError as e:
@@ -67,24 +60,20 @@ async def create_ocorrencia_endpoint(
         )
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.error(f"Erro SQLAlchemy: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro de banco de dados. Erro: {str(e)}"
         )
     except HTTPException as e:
-        logger.warning(f"HTTPException: {e.detail}")
         raise
     except Exception as e:
         await db.rollback()
-        logger.exception("Erro inesperado")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro inesperado. Erro: {str(e)}"
         )
 
 
-# Nova rota: Listar ocorrências por usuario_id
 @router.get(
     "/por-usuario/{user_id}",
     response_model=List[OcorrenciaOut],
@@ -103,7 +92,7 @@ async def read_ocorrencias_by_user_id_endpoint(
     limit: int = Query(100, ge=1, le=200, description="Máximo de registros a retornar."),
     filters: OcorrenciaFilterParams = Depends(),
     db: AsyncSession = Depends(get_async_db),
-    #current_user: models.User = Depends(require_admin_user),
+    current_user: models.User = Depends(get_current_user),
     authorized_system: SistemaAutorizado = Depends(get_current_authorized_system)
 ):
     try:
@@ -113,7 +102,7 @@ async def read_ocorrencias_by_user_id_endpoint(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro inesperado: {str(e)}")
 
-# Nova rota: Listar ocorrências por usuario_encaminhado
+
 @router.get(
     "/por-usuario-encaminhado/{usuario_encaminhado_id}",
     response_model=List[OcorrenciaOut],

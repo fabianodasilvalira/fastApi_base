@@ -12,9 +12,8 @@ from app.routers import parecer as parecer_router
 from app.routers import sistemas_autorizados as sistemas_autorizados_router
 
 app = FastAPI(
-    title="API de Ocorrências e Gestão",
-    version="0.2.0",
-    description="API para gestão de ocorrências, usuários, pareceres e sistemas autorizados."
+    title="Ami backend",
+    version="0.1.0"
 )
 
 @app.on_event("startup")

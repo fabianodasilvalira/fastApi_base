@@ -61,7 +61,7 @@ class OcorrenciaCreate(BaseModel):
     parecer_usuario_id: Optional[int] = None
     parecer_descricao: Optional[str] = None
     parecer_data: Optional[datetime] = None
-    notificar: Optional[str]  = None
+    notificar: Optional[str]  = "S"
     notificado: Optional[str] = "N"
     pessoa_id: Optional[int] = None
     latitude: Optional[float] = None
@@ -94,3 +94,10 @@ class OcorrenciaWithPareceresOut(OcorrenciaOut):
 
     class Config:
         from_attributes = True
+
+
+class PaginatedOcorrencias(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    data: List[OcorrenciaOut]

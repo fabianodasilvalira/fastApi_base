@@ -57,3 +57,7 @@ class LoginResponse(BaseModel):
 
 class GovBrAuthRequest(BaseModel):
     redirect_uri: str = Field(..., description="URI de redirecionamento após autenticação no gov.br")
+
+
+class LogoutResponse(BaseModel):
+    message: str

@@ -10,6 +10,7 @@ from app.schemas.ocorrencia_schemas import OcorrenciaCreate, OcorrenciaUpdate, O
 
 logger = logging.getLogger(__name__)
 
+
 def _apply_common_filters(stmt, filters: OcorrenciaFilterParams):
     """Aplica filtros comuns a uma query SQLAlchemy de ocorrências."""
     if filters.situacao_ocorrencia_id is not None:
@@ -54,6 +55,7 @@ async def get_ocorrencias(db: AsyncSession, skip: int = 0, limit: int = 100) -> 
         # Retornar lista vazia ou levantar exceção para o router decidir
         # Por ora, levantar para o router retornar um 500
         raise e
+
 
 async def get_ocorrencia_by_id(db: AsyncSession, ocorrencia_id: int) -> Ocorrencia | None:
     try:
@@ -110,7 +112,6 @@ async def get_ocorrencias_by_user_id(
             dialect=postgresql.dialect(),  # troque para mysql.dialect() se for MySQL
             compile_kwargs={"literal_binds": True}
         )
-        print("\n--- SQL GERADA ---\n", compiled, "\n------------------")
 
         result = await db.execute(stmt)
         return result.scalars().all()
@@ -165,7 +166,6 @@ async def get_ocorrencias_by_orgao_encaminhado(
         raise e
 
 
-
 async def update_ocorrencia(db: AsyncSession, db_ocorrencia: Ocorrencia, ocorrencia_in: OcorrenciaUpdate) -> Ocorrencia:
     update_data = ocorrencia_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -184,13 +184,13 @@ async def update_ocorrencia(db: AsyncSession, db_ocorrencia: Ocorrencia, ocorren
         logger.error(f"Erro de banco de dados ao atualizar ocorrência {db_ocorrencia.id}: {e}")
         raise e
 
+
 async def delete_ocorrencia(db: AsyncSession, db_ocorrencia: Ocorrencia) -> Ocorrencia:
     try:
         await db.delete(db_ocorrencia)
         await db.commit()
-        return db_ocorrencia # Retorna o objeto deletado para confirmação
+        return db_ocorrencia  # Retorna o objeto deletado para confirmação
     except SQLAlchemyError as e:
         await db.rollback()
         logger.error(f"Erro de banco de dados ao deletar ocorrência {db_ocorrencia.id}: {e}")
         raise e
-

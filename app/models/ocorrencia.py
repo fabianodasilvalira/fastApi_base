@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, Date, Time, DateTime, Boolean, T
 from sqlalchemy.orm import relationship # Adicionar relationship
 
 from app.db.base_class import Base # Corrigido para usar a Base correta do projeto
+from app.models.tipo_ocorrencia import TipoOcorrencia
 
 
 class Ocorrencia(Base):
@@ -16,7 +17,7 @@ class Ocorrencia(Base):
     situacao_ocorrencia_id = Column(Integer, nullable=False)
     tipo_atendimento_id = Column(Integer, nullable=True)
     programa_id = Column(Integer, nullable=False)
-    tipo_ocorrencia_id = Column(Integer, nullable=True)
+    tipo_ocorrencia_id = Column(Integer, ForeignKey("tipo_ocorrencia.id"), nullable=True)
     protocolo = Column(String(20), nullable=True)
     regiao_id = Column(Integer, nullable=False)
     sigilo = Column(CHAR(1),  nullable=True, default="N")
@@ -49,3 +50,4 @@ class Ocorrencia(Base):
 
     # Relacionamento com Parecer
     pareceres = relationship("Parecer", back_populates="ocorrencia")
+    tipo_ocorrencia = relationship("TipoOcorrencia", back_populates="ocorrencias")

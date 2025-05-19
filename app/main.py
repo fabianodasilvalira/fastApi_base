@@ -5,11 +5,11 @@ from app.db.session import engine as async_engine
 from app.db.base_class import Base
 from app.models import ocorrencia, user, parecer, sistemas_autorizados
 
-from app.routers import auth as auth_router
-from app.routers import ocorrencia as ocorrencia_router
-from app.routers import users as usuarios_router
-from app.routers import parecer as parecer_router
-from app.routers import sistemas_autorizados as sistemas_autorizados_router
+from app.api.v1.routers import auth as auth_router
+from app.api.v1.routers import ocorrencia as ocorrencia_router
+from app.api.v1.routers import users as usuarios_router
+from app.api.v1.routers import parecer as parecer_router
+from app.api.v1.routers import sistemas_autorizados as sistemas_autorizados_router
 
 app = FastAPI(
     title="Ami backend",
